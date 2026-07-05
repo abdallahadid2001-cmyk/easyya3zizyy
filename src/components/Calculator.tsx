@@ -2,8 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import * as XLSX from "xlsx";
 import { translations, type Lang } from "@/lib/i18n";
 import { formatBigUnit, formatHours, formatNumber, normalizeDigits, parseNum } from "@/lib/numbers";
-import { useServerFn } from "@tanstack/react-start";
-import { ocrExtract } from "@/lib/ocr.functions";
+import { ocrExtractClient } from "@/lib/ocr-client";
 
 type RowKey = "1m" | "5m" | "15m" | "30m" | "1h" | "2h" | "8h" | "12h" | "24h";
 
@@ -157,33 +156,6 @@ function useLocalState(): [State, React.Dispatch<React.SetStateAction<State>>] {
 }
 
 // crop helper
-async function cropImage(file: File, region: "bottom" | "middle"): Promise<{ base64: string; mime: string; dataUrl: string }> {
-  const dataUrl = await new Promise<string>((resolve, reject) => {
-    const r = new FileReader();
-    r.onload = () => resolve(r.result as string);
-    r.onerror = reject;
-    r.readAsDataURL(file);
-  });
-  const img = await new Promise<HTMLImageElement>((resolve, reject) => {
-    const i = new Image();
-    i.onload = () => resolve(i);
-    i.onerror = reject;
-    i.src = dataUrl;
-  });
-  const w = img.naturalWidth;
-  const h = img.naturalHeight;
-  let sy = 0, sh = h;
-  if (region === "bottom") { sy = Math.floor(h * 0.55); sh = h - sy; }
-  else if (region === "middle") { sy = Math.floor(h * 0.30); sh = Math.floor(h * 0.40); }
-  const canvas = document.createElement("canvas");
-  canvas.width = w;
-  canvas.height = sh;
-  const ctx = canvas.getContext("2d")!;
-  ctx.drawImage(img, 0, sy, w, sh, 0, 0, w, sh);
-  const outDataUrl = canvas.toDataURL("image/jpeg", 0.85);
-  const base64 = outDataUrl.split(",")[1];
-  return { base64, mime: "image/jpeg", dataUrl };
-}
 
 async function fileToDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -217,7 +189,7 @@ export function Calculator({ lang, setLang }: { lang: Lang; setLang: (l: Lang) =
     if (typeof window === "undefined") return "light";
     return (window.localStorage.getItem("theme") as "light" | "dark") ?? "light";
   });
-  const ocr = useServerFn(ocrExtract);
+  
 
   const showToast = (msg: string) => {
     setToast(msg);
@@ -356,30 +328,10 @@ export function Calculator({ lang, setLang }: { lang: Lang; setLang: (l: Lang) =
   const handleSoldiersImage = async (file: File) => {
     setBusy("soldiers");
     try {
-      const { base64, mime, dataUrl } = await cropImage(file, "bottom");
-      setOcrImg("soldiers", dataUrl);
-      // Try up to 3 attempts: cropped, cropped again, then full image
-      const fullFull = await fileToDataUrl(file);
-      const fullBase64 = fullFull.split(",")[1];
-      const attempts: { b: string; m: string }[] = [
-        { b: base64, m: mime },
-        { b: base64, m: mime },
-        { b: fullBase64, m: file.type || "image/jpeg" },
-      ];
-      let row: any = null;
-      for (const a of attempts) {
-        try {
-          const out: any = await ocr({ data: { imageBase64: a.b, mime: a.m, table: "soldiers" } });
-          const r = Array.isArray(out?.rows) ? out.rows[0] : null;
-          if (r && (r.count != null || r.days != null || r.hours != null || r.minutes != null || r.seconds != null)) {
-            row = r;
-            break;
-          }
-        } catch (e) {
-          console.error("OCR attempt failed", e);
-        }
-      }
-      if (row) {
+      const { previewDataUrl, result } = await ocrExtractClient(file, "soldiers");
+      setOcrImg("soldiers", previewDataUrl);
+      const row = (result as any).rows?.[0];
+      if (row && (row.count != null || row.days || row.hours || row.minutes || row.seconds)) {
         setState((s) => ({
           ...s,
           trainingUnit: row.count != null ? String(Math.max(1, Math.round(row.count))) : s.trainingUnit,
@@ -405,31 +357,10 @@ export function Calculator({ lang, setLang }: { lang: Lang; setLang: (l: Lang) =
   const handlePowerImage = async (file: File) => {
     setBusy("power");
     try {
-      const { base64, mime, dataUrl } = await cropImage(file, "middle");
-      const bottom = await cropImage(file, "bottom");
-      setOcrImg("power", dataUrl);
-      const fullFull = await fileToDataUrl(file);
-      const fullBase64 = fullFull.split(",")[1];
-      const attempts: { b: string; m: string }[] = [
-        { b: bottom.base64, m: bottom.mime },
-        { b: fullBase64, m: file.type || "image/jpeg" },
-        { b: base64, m: mime },
-        { b: bottom.base64, m: bottom.mime },
-      ];
-      let val = 0;
-      let soldiers = 0;
-      for (const a of attempts) {
-        try {
-          const out: any = await ocr({ data: { imageBase64: a.b, mime: a.m, table: "power" } });
-          const v = parseNum(out?.power);
-          const s = parseNum(out?.soldiers);
-          if (v > val) val = v;
-          if (s > 0 && soldiers <= 0) soldiers = s;
-          if (val > 0 && soldiers > 0) break;
-        } catch (e) {
-          console.error("Power OCR attempt failed", e);
-        }
-      }
+      const { previewDataUrl, result } = await ocrExtractClient(file, "power");
+      setOcrImg("power", previewDataUrl);
+      const val = (result as any).power ?? 0;
+      const soldiers = (result as any).soldiers ?? 0;
       const filled: string[] = [];
       if (val > 0 || soldiers > 0) {
         setState((s) => ({
@@ -456,9 +387,9 @@ export function Calculator({ lang, setLang }: { lang: Lang; setLang: (l: Lang) =
   const handleConsumptionImage = async (file: File) => {
     setBusy("consumption");
     try {
-      const { base64, mime, dataUrl } = await cropImage(file, "bottom");
-      setOcrImg("consumption", dataUrl);
-      const out: any = await ocr({ data: { imageBase64: base64, mime, table: "consumption" } });
+      const { previewDataUrl, result } = await ocrExtractClient(file, "consumption");
+      setOcrImg("consumption", previewDataUrl);
+      const out = result as any;
       const compact = {
         wheat: compactOcrNumber(out?.wheat),
         wood: compactOcrNumber(out?.wood),
@@ -495,6 +426,7 @@ export function Calculator({ lang, setLang }: { lang: Lang; setLang: (l: Lang) =
       setBusy(null);
     }
   };
+
 
   const handleTasarihUpload = async (file: File) => {
     const dataUrl = await fileToDataUrl(file);
