@@ -14,13 +14,77 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      app_users: {
+        Row: {
+          first_seen_date: string
+          id: string
+          last_seen_date: string
+        }
+        Insert: {
+          first_seen_date?: string
+          id: string
+          last_seen_date?: string
+        }
+        Update: {
+          first_seen_date?: string
+          id?: string
+          last_seen_date?: string
+        }
+        Relationships: []
+      }
+      daily_stats: {
+        Row: {
+          dau: number
+          day: string
+          new_users: number
+          ocr_fail: number
+          ocr_ms_count: number
+          ocr_ms_sum: number
+          ocr_success: number
+          ocr_total: number
+        }
+        Insert: {
+          dau?: number
+          day: string
+          new_users?: number
+          ocr_fail?: number
+          ocr_ms_count?: number
+          ocr_ms_sum?: number
+          ocr_success?: number
+          ocr_total?: number
+        }
+        Update: {
+          dau?: number
+          day?: string
+          new_users?: number
+          ocr_fail?: number
+          ocr_ms_count?: number
+          ocr_ms_sum?: number
+          ocr_success?: number
+          ocr_total?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
-      [_ in never]: never
+      stats_overview: {
+        Row: {
+          avg_ocr_ms_all_time: number | null
+          dau_today: number | null
+          mau_30d: number | null
+          ocr_fail_all_time: number | null
+          ocr_success_all_time: number | null
+          ocr_total_all_time: number | null
+          total_users: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
-      [_ in never]: never
+      record_activity: {
+        Args: { p_client_id: string; p_duration_ms?: number; p_event: string }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never

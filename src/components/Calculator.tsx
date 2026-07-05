@@ -3,6 +3,7 @@ import * as XLSX from "xlsx";
 import { translations, type Lang } from "@/lib/i18n";
 import { formatBigUnit, formatHours, formatNumber, normalizeDigits, parseNum } from "@/lib/numbers";
 import { ocrExtractClient } from "@/lib/ocr-client";
+import { recordActivity, recordSessionOpen } from "@/lib/stats";
 
 type RowKey = "1m" | "5m" | "15m" | "30m" | "1h" | "2h" | "8h" | "12h" | "24h";
 
@@ -206,6 +207,10 @@ export function Calculator({ lang, setLang }: { lang: Lang; setLang: (l: Lang) =
     document.documentElement.dir = isRTL ? "rtl" : "ltr";
   }, [lang, isRTL]);
 
+  useEffect(() => {
+    recordSessionOpen();
+  }, []);
+
   const markAi = (...keys: string[]) =>
     setAiFilled((prev) => { const n = new Set(prev); keys.forEach((k) => n.add(k)); return n; });
   const unmarkAi = (key: string) =>
@@ -327,6 +332,8 @@ export function Calculator({ lang, setLang }: { lang: Lang; setLang: (l: Lang) =
 
   const handleSoldiersImage = async (file: File) => {
     setBusy("soldiers");
+    const started = performance.now();
+    let ok = false;
     try {
       const { previewDataUrl, result } = await ocrExtractClient(file, "soldiers");
       setOcrImg("soldiers", previewDataUrl);
@@ -342,6 +349,7 @@ export function Calculator({ lang, setLang }: { lang: Lang; setLang: (l: Lang) =
           trainSeconds: row.seconds != null ? String(row.seconds) : s.trainSeconds,
         }));
         markAi("t2.unit", "t2.days", "t2.hours", "t2.minutes", "t2.seconds");
+        ok = true;
       } else {
         showToast(t.aiError);
       }
@@ -350,12 +358,15 @@ export function Calculator({ lang, setLang }: { lang: Lang; setLang: (l: Lang) =
       showToast(t.aiError);
     } finally {
       setBusy(null);
+      recordActivity(ok ? "ocr_success" : "ocr_fail", performance.now() - started);
     }
   };
 
 
   const handlePowerImage = async (file: File) => {
     setBusy("power");
+    const started = performance.now();
+    let ok = false;
     try {
       const { previewDataUrl, result } = await ocrExtractClient(file, "power");
       setOcrImg("power", previewDataUrl);
@@ -372,6 +383,7 @@ export function Calculator({ lang, setLang }: { lang: Lang; setLang: (l: Lang) =
         if (val > 0) filled.push("t3.power");
         if (soldiers > 0) filled.push("t3.unit");
         markAi(...filled);
+        ok = true;
       } else {
         showToast(t.aiError);
       }
@@ -380,12 +392,15 @@ export function Calculator({ lang, setLang }: { lang: Lang; setLang: (l: Lang) =
       showToast(t.aiError);
     } finally {
       setBusy(null);
+      recordActivity(ok ? "ocr_success" : "ocr_fail", performance.now() - started);
     }
   };
 
 
   const handleConsumptionImage = async (file: File) => {
     setBusy("consumption");
+    const started = performance.now();
+    let ok = false;
     try {
       const { previewDataUrl, result } = await ocrExtractClient(file, "consumption");
       setOcrImg("consumption", previewDataUrl);
@@ -419,13 +434,16 @@ export function Calculator({ lang, setLang }: { lang: Lang; setLang: (l: Lang) =
       }));
       if (batch > 0) filledKeys.push("t4.unit");
       markAi(...filledKeys);
+      ok = true;
     } catch (e) {
       console.error(e);
       showToast(t.aiError);
     } finally {
       setBusy(null);
+      recordActivity(ok ? "ocr_success" : "ocr_fail", performance.now() - started);
     }
   };
+
 
 
   const handleTasarihUpload = async (file: File) => {
