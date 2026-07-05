@@ -2,8 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import * as XLSX from "xlsx";
 import { translations, type Lang } from "@/lib/i18n";
 import { formatBigUnit, formatHours, formatNumber, normalizeDigits, parseNum } from "@/lib/numbers";
-import { useServerFn } from "@tanstack/react-start";
-import { ocrExtract } from "@/lib/ocr.functions";
+import { ocrExtractClient } from "@/lib/ocr-client";
 
 type RowKey = "1m" | "5m" | "15m" | "30m" | "1h" | "2h" | "8h" | "12h" | "24h";
 
@@ -217,7 +216,7 @@ export function Calculator({ lang, setLang }: { lang: Lang; setLang: (l: Lang) =
     if (typeof window === "undefined") return "light";
     return (window.localStorage.getItem("theme") as "light" | "dark") ?? "light";
   });
-  const ocr = useServerFn(ocrExtract);
+  
 
   const showToast = (msg: string) => {
     setToast(msg);
