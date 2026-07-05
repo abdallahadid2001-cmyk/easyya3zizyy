@@ -355,30 +355,10 @@ export function Calculator({ lang, setLang }: { lang: Lang; setLang: (l: Lang) =
   const handleSoldiersImage = async (file: File) => {
     setBusy("soldiers");
     try {
-      const { base64, mime, dataUrl } = await cropImage(file, "bottom");
-      setOcrImg("soldiers", dataUrl);
-      // Try up to 3 attempts: cropped, cropped again, then full image
-      const fullFull = await fileToDataUrl(file);
-      const fullBase64 = fullFull.split(",")[1];
-      const attempts: { b: string; m: string }[] = [
-        { b: base64, m: mime },
-        { b: base64, m: mime },
-        { b: fullBase64, m: file.type || "image/jpeg" },
-      ];
-      let row: any = null;
-      for (const a of attempts) {
-        try {
-          const out: any = await ocr({ data: { imageBase64: a.b, mime: a.m, table: "soldiers" } });
-          const r = Array.isArray(out?.rows) ? out.rows[0] : null;
-          if (r && (r.count != null || r.days != null || r.hours != null || r.minutes != null || r.seconds != null)) {
-            row = r;
-            break;
-          }
-        } catch (e) {
-          console.error("OCR attempt failed", e);
-        }
-      }
-      if (row) {
+      const { previewDataUrl, result } = await ocrExtractClient(file, "soldiers");
+      setOcrImg("soldiers", previewDataUrl);
+      const row = (result as any).rows?.[0];
+      if (row && (row.count != null || row.days || row.hours || row.minutes || row.seconds)) {
         setState((s) => ({
           ...s,
           trainingUnit: row.count != null ? String(Math.max(1, Math.round(row.count))) : s.trainingUnit,
@@ -404,31 +384,10 @@ export function Calculator({ lang, setLang }: { lang: Lang; setLang: (l: Lang) =
   const handlePowerImage = async (file: File) => {
     setBusy("power");
     try {
-      const { base64, mime, dataUrl } = await cropImage(file, "middle");
-      const bottom = await cropImage(file, "bottom");
-      setOcrImg("power", dataUrl);
-      const fullFull = await fileToDataUrl(file);
-      const fullBase64 = fullFull.split(",")[1];
-      const attempts: { b: string; m: string }[] = [
-        { b: bottom.base64, m: bottom.mime },
-        { b: fullBase64, m: file.type || "image/jpeg" },
-        { b: base64, m: mime },
-        { b: bottom.base64, m: bottom.mime },
-      ];
-      let val = 0;
-      let soldiers = 0;
-      for (const a of attempts) {
-        try {
-          const out: any = await ocr({ data: { imageBase64: a.b, mime: a.m, table: "power" } });
-          const v = parseNum(out?.power);
-          const s = parseNum(out?.soldiers);
-          if (v > val) val = v;
-          if (s > 0 && soldiers <= 0) soldiers = s;
-          if (val > 0 && soldiers > 0) break;
-        } catch (e) {
-          console.error("Power OCR attempt failed", e);
-        }
-      }
+      const { previewDataUrl, result } = await ocrExtractClient(file, "power");
+      setOcrImg("power", previewDataUrl);
+      const val = (result as any).power ?? 0;
+      const soldiers = (result as any).soldiers ?? 0;
       const filled: string[] = [];
       if (val > 0 || soldiers > 0) {
         setState((s) => ({
@@ -455,9 +414,9 @@ export function Calculator({ lang, setLang }: { lang: Lang; setLang: (l: Lang) =
   const handleConsumptionImage = async (file: File) => {
     setBusy("consumption");
     try {
-      const { base64, mime, dataUrl } = await cropImage(file, "bottom");
-      setOcrImg("consumption", dataUrl);
-      const out: any = await ocr({ data: { imageBase64: base64, mime, table: "consumption" } });
+      const { previewDataUrl, result } = await ocrExtractClient(file, "consumption");
+      setOcrImg("consumption", previewDataUrl);
+      const out = result as any;
       const compact = {
         wheat: compactOcrNumber(out?.wheat),
         wood: compactOcrNumber(out?.wood),
@@ -494,6 +453,7 @@ export function Calculator({ lang, setLang }: { lang: Lang; setLang: (l: Lang) =
       setBusy(null);
     }
   };
+
 
   const handleTasarihUpload = async (file: File) => {
     const dataUrl = await fileToDataUrl(file);
