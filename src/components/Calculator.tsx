@@ -3,6 +3,7 @@ import * as XLSX from "xlsx";
 import { translations, type Lang } from "@/lib/i18n";
 import { formatBigUnit, formatHours, formatNumber, normalizeDigits, parseNum } from "@/lib/numbers";
 import { ocrExtractClient } from "@/lib/ocr-client";
+import { recordActivity, recordSessionOpen } from "@/lib/stats";
 
 type RowKey = "1m" | "5m" | "15m" | "30m" | "1h" | "2h" | "8h" | "12h" | "24h";
 
