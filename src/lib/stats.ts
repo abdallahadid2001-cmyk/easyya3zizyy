@@ -9,7 +9,8 @@ function getClientId(): string | null {
   try {
     let id = window.localStorage.getItem(CLIENT_ID_KEY);
     if (!id) {
-      id = (crypto as any)?.randomUUID?.() ?? fallbackUuid();
+      const uuid = (crypto as any)?.randomUUID?.();
+      id = typeof uuid === "string" ? uuid : fallbackUuid();
       window.localStorage.setItem(CLIENT_ID_KEY, id);
     }
     return id;
@@ -19,7 +20,6 @@ function getClientId(): string | null {
 }
 
 function fallbackUuid(): string {
-  // RFC4122 v4-ish fallback for very old browsers
   return "10000000-1000-4000-8000-100000000000".replace(/[018]/g, (c) => {
     const n = Number(c);
     const r = (crypto.getRandomValues(new Uint8Array(1))[0] & 15) >> (n / 4);
@@ -33,12 +33,10 @@ type Event = "open" | "ocr_success" | "ocr_fail";
 export function recordActivity(event: Event, durationMs?: number): void {
   const clientId = getClientId();
   if (!clientId) return;
-  // Round to int; drop invalid.
   const p_duration_ms =
     typeof durationMs === "number" && Number.isFinite(durationMs) && durationMs >= 0
       ? Math.round(durationMs)
-      : null;
-  // Do not await — analytics must never block the app.
+      : undefined;
   supabase
     .rpc("record_activity", { p_client_id: clientId, p_event: event, p_duration_ms })
     .then(() => {}, () => {});
