@@ -156,33 +156,6 @@ function useLocalState(): [State, React.Dispatch<React.SetStateAction<State>>] {
 }
 
 // crop helper
-async function cropImage(file: File, region: "bottom" | "middle"): Promise<{ base64: string; mime: string; dataUrl: string }> {
-  const dataUrl = await new Promise<string>((resolve, reject) => {
-    const r = new FileReader();
-    r.onload = () => resolve(r.result as string);
-    r.onerror = reject;
-    r.readAsDataURL(file);
-  });
-  const img = await new Promise<HTMLImageElement>((resolve, reject) => {
-    const i = new Image();
-    i.onload = () => resolve(i);
-    i.onerror = reject;
-    i.src = dataUrl;
-  });
-  const w = img.naturalWidth;
-  const h = img.naturalHeight;
-  let sy = 0, sh = h;
-  if (region === "bottom") { sy = Math.floor(h * 0.55); sh = h - sy; }
-  else if (region === "middle") { sy = Math.floor(h * 0.30); sh = Math.floor(h * 0.40); }
-  const canvas = document.createElement("canvas");
-  canvas.width = w;
-  canvas.height = sh;
-  const ctx = canvas.getContext("2d")!;
-  ctx.drawImage(img, 0, sy, w, sh, 0, 0, w, sh);
-  const outDataUrl = canvas.toDataURL("image/jpeg", 0.85);
-  const base64 = outDataUrl.split(",")[1];
-  return { base64, mime: "image/jpeg", dataUrl };
-}
 
 async function fileToDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
