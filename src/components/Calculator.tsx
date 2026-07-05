@@ -207,6 +207,10 @@ export function Calculator({ lang, setLang }: { lang: Lang; setLang: (l: Lang) =
     document.documentElement.dir = isRTL ? "rtl" : "ltr";
   }, [lang, isRTL]);
 
+  useEffect(() => {
+    recordSessionOpen();
+  }, []);
+
   const markAi = (...keys: string[]) =>
     setAiFilled((prev) => { const n = new Set(prev); keys.forEach((k) => n.add(k)); return n; });
   const unmarkAi = (key: string) =>
