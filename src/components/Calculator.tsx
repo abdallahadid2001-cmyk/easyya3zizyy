@@ -122,6 +122,10 @@ const initialState = (): State => ({
   ocrZoom: 1,
 });
 
+// Base64 image blobs should NOT be persisted — they can add hundreds of KB
+// to every JSON.stringify on each keystroke.
+const NON_PERSISTED_KEYS = ["tasarihImage", "ocrImg"] as const;
+
 function useLocalState(): [State, React.Dispatch<React.SetStateAction<State>>] {
   const [state, setState] = useState<State>(() => {
     if (typeof window === "undefined") return initialState();
@@ -143,7 +147,8 @@ function useLocalState(): [State, React.Dispatch<React.SetStateAction<State>>] {
           boxes: { ...base.boxes, ...(parsed.boxes ?? {}) },
           consManual: { ...base.consManual, ...(parsed.consManual ?? {}) },
           consManualMul: { ...base.consManualMul, ...(parsed.consManualMul ?? {}) },
-          ocrImg: { ...base.ocrImg, ...(parsed.ocrImg ?? {}) },
+          tasarihImage: null,
+          ocrImg: { ...base.ocrImg },
           ocrShow: { ...base.ocrShow, ...(parsed.ocrShow ?? {}) },
         };
       }
@@ -151,7 +156,15 @@ function useLocalState(): [State, React.Dispatch<React.SetStateAction<State>>] {
     return initialState();
   });
   useEffect(() => {
-    try { window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch {}
+    // Debounce + strip heavy image blobs before writing.
+    const id = window.setTimeout(() => {
+      try {
+        const toStore: Record<string, unknown> = { ...state };
+        for (const k of NON_PERSISTED_KEYS) delete toStore[k];
+        window.localStorage.setItem(STORAGE_KEY, JSON.stringify(toStore));
+      } catch {}
+    }, 300);
+    return () => window.clearTimeout(id);
   }, [state]);
   return [state, setState];
 }
@@ -192,10 +205,13 @@ export function Calculator({ lang, setLang }: { lang: Lang; setLang: (l: Lang) =
   });
   
 
+  const toastTimer = useRef<number | null>(null);
   const showToast = (msg: string) => {
     setToast(msg);
-    setTimeout(() => setToast(null), 1800);
+    if (toastTimer.current) window.clearTimeout(toastTimer.current);
+    toastTimer.current = window.setTimeout(() => setToast(null), 1800);
   };
+  useEffect(() => () => { if (toastTimer.current) window.clearTimeout(toastTimer.current); }, []);
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", theme === "dark");
@@ -353,8 +369,7 @@ export function Calculator({ lang, setLang }: { lang: Lang; setLang: (l: Lang) =
       } else {
         showToast(t.aiError);
       }
-    } catch (e) {
-      console.error(e);
+    } catch {
       showToast(t.aiError);
     } finally {
       setBusy(null);
@@ -387,8 +402,7 @@ export function Calculator({ lang, setLang }: { lang: Lang; setLang: (l: Lang) =
       } else {
         showToast(t.aiError);
       }
-    } catch (e) {
-      console.error(e);
+    } catch {
       showToast(t.aiError);
     } finally {
       setBusy(null);
@@ -435,8 +449,7 @@ export function Calculator({ lang, setLang }: { lang: Lang; setLang: (l: Lang) =
       if (batch > 0) filledKeys.push("t4.unit");
       markAi(...filledKeys);
       ok = true;
-    } catch (e) {
-      console.error(e);
+    } catch {
       showToast(t.aiError);
     } finally {
       setBusy(null);
