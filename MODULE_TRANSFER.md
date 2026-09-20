@@ -225,6 +225,13 @@ Verified on this repository:
 - A React 19 + Tailwind 4 host able to render `<Calculator lang setLang />`.
 - Optional: a route for the admin dashboard and the two server-only secrets.
 
+## Before pushing to GitHub
+
+`.env` is currently present at the repo root and is **not** listed in `.gitignore`.
+It holds only project-specific URL + publishable keys (no service-role key, no admin
+password — those live in the platform secret store), but it is environment-specific.
+Exclude it from the public repository and ship `.env.example` instead.
+
 ## What must NOT be copied / duplicated
 
 - A second Supabase client instance or a second `types.ts`.
