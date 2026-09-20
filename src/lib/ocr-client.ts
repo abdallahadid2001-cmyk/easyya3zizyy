@@ -150,7 +150,10 @@ function parseSoldiers(text: string): SoldiersResult {
     if (!line) continue;
     const time = line.match(/(?:(\d{1,2}):)?(\d{1,2}):(\d{2}):(\d{2})|(\d{1,2}):(\d{2}):(\d{2})/);
     if (!time) continue;
-    let days = 0, hours = 0, minutes = 0, seconds = 0;
+    let days = 0,
+      hours = 0,
+      minutes = 0,
+      seconds = 0;
     if (time[4] !== undefined) {
       days = time[1] ? +time[1] : 0;
       hours = +time[2];

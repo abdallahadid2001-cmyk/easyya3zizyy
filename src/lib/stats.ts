@@ -9,7 +9,7 @@ function getClientId(): string | null {
   try {
     let id = window.localStorage.getItem(CLIENT_ID_KEY);
     if (!id) {
-      const uuid = (crypto as any)?.randomUUID?.();
+      const uuid = globalThis.crypto?.randomUUID?.();
       id = typeof uuid === "string" ? uuid : fallbackUuid();
       window.localStorage.setItem(CLIENT_ID_KEY, id);
     }
@@ -37,9 +37,10 @@ export function recordActivity(event: Event, durationMs?: number): void {
     typeof durationMs === "number" && Number.isFinite(durationMs) && durationMs >= 0
       ? Math.round(durationMs)
       : undefined;
-  supabase
-    .rpc("record_activity", { p_client_id: clientId, p_event: event, p_duration_ms })
-    .then(() => {}, () => {});
+  supabase.rpc("record_activity", { p_client_id: clientId, p_event: event, p_duration_ms }).then(
+    () => {},
+    () => {},
+  );
 }
 
 // Call once per browser session.

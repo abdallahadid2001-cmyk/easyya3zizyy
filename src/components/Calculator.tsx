@@ -22,11 +22,20 @@ const ROWS: { key: RowKey; minutes: number; labelKey: keyof typeof translations.
 const STORAGE_KEY = "hours-calc-v4";
 
 type RowVals = {
-  free: string; training: string; suitcase?: string;
-  freeMul: string; trainingMul: string; suitcaseMul?: string;
+  free: string;
+  training: string;
+  suitcase?: string;
+  freeMul: string;
+  trainingMul: string;
+  suitcaseMul?: string;
 };
 type BoxKey = "10kw" | "50kw" | "100kw" | "150k" | "500k" | "1_5m" | "5m" | "15m" | "50m";
-const BOXES: { key: BoxKey; value: number; labelKey: keyof typeof translations.ar; woodOnly?: boolean }[] = [
+const BOXES: {
+  key: BoxKey;
+  value: number;
+  labelKey: keyof typeof translations.ar;
+  woodOnly?: boolean;
+}[] = [
   { key: "10kw", value: 10_000, labelKey: "box10kw", woodOnly: true },
   { key: "50kw", value: 50_000, labelKey: "box50kw", woodOnly: true },
   { key: "100kw", value: 100_000, labelKey: "box100kw", woodOnly: true },
@@ -40,7 +49,11 @@ const BOXES: { key: BoxKey; value: number; labelKey: keyof typeof translations.a
 
 // per-1-soldier default consumption rates (fallback when user hasn't entered batch numbers)
 const CONSUMPTION_PER_SOLDIER = {
-  wheat: 800, wood: 800, iron: 200, silver: 60, crystal: 0,
+  wheat: 800,
+  wood: 800,
+  iron: 200,
+  silver: 60,
+  crystal: 0,
 } as const;
 
 type ResKey = keyof typeof CONSUMPTION_PER_SOLDIER;
@@ -90,11 +103,21 @@ type State = {
 };
 
 const emptyRow = (): RowVals => ({
-  free: "", training: "", suitcase: "",
-  freeMul: "1", trainingMul: "1", suitcaseMul: "1",
+  free: "",
+  training: "",
+  suitcase: "",
+  freeMul: "1",
+  trainingMul: "1",
+  suitcaseMul: "1",
 });
 const initialState = (): State => ({
-  rows: ROWS.reduce((acc, r) => { acc[r.key] = emptyRow(); return acc; }, {} as Record<RowKey, RowVals>),
+  rows: ROWS.reduce(
+    (acc, r) => {
+      acc[r.key] = emptyRow();
+      return acc;
+    },
+    {} as Record<RowKey, RowVals>,
+  ),
   manualHours: "",
   manualHoursMul: "1",
   trainingUnit: "",
@@ -108,7 +131,13 @@ const initialState = (): State => ({
   powerSoldierUnit: "",
   powerSoldierUnitMul: "1",
   powerValue: "",
-  boxes: BOXES.reduce((acc, b) => { acc[b.key] = ""; return acc; }, {} as Record<BoxKey, string>),
+  boxes: BOXES.reduce(
+    (acc, b) => {
+      acc[b.key] = "";
+      return acc;
+    },
+    {} as Record<BoxKey, string>,
+  ),
   resource: "wood",
   consSoldierUnit: "",
   consSoldierUnitMul: "1",
@@ -203,7 +232,6 @@ export function Calculator({ lang, setLang }: { lang: Lang; setLang: (l: Lang) =
     if (typeof window === "undefined") return "light";
     return (window.localStorage.getItem("theme") as "light" | "dark") ?? "light";
   });
-  
 
   const toastTimer = useRef<number | null>(null);
   const showToast = (msg: string) => {
@@ -211,11 +239,18 @@ export function Calculator({ lang, setLang }: { lang: Lang; setLang: (l: Lang) =
     if (toastTimer.current) window.clearTimeout(toastTimer.current);
     toastTimer.current = window.setTimeout(() => setToast(null), 1800);
   };
-  useEffect(() => () => { if (toastTimer.current) window.clearTimeout(toastTimer.current); }, []);
+  useEffect(
+    () => () => {
+      if (toastTimer.current) window.clearTimeout(toastTimer.current);
+    },
+    [],
+  );
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", theme === "dark");
-    try { window.localStorage.setItem("theme", theme); } catch {}
+    try {
+      window.localStorage.setItem("theme", theme);
+    } catch {}
   }, [theme]);
 
   useEffect(() => {
@@ -228,9 +263,18 @@ export function Calculator({ lang, setLang }: { lang: Lang; setLang: (l: Lang) =
   }, []);
 
   const markAi = (...keys: string[]) =>
-    setAiFilled((prev) => { const n = new Set(prev); keys.forEach((k) => n.add(k)); return n; });
+    setAiFilled((prev) => {
+      const n = new Set(prev);
+      keys.forEach((k) => n.add(k));
+      return n;
+    });
   const unmarkAi = (key: string) =>
-    setAiFilled((prev) => { if (!prev.has(key)) return prev; const n = new Set(prev); n.delete(key); return n; });
+    setAiFilled((prev) => {
+      if (!prev.has(key)) return prev;
+      const n = new Set(prev);
+      n.delete(key);
+      return n;
+    });
   const aiCls = (k: string) =>
     aiFilled.has(k) ? "ring-2 ring-amber-400 bg-amber-50 dark:bg-amber-950/40" : "";
 
@@ -247,10 +291,7 @@ export function Calculator({ lang, setLang }: { lang: Lang; setLang: (l: Lang) =
     return out;
   }, [state.rows]);
 
-  const totalHours = useMemo(
-    () => Object.values(rowHours).reduce((a, b) => a + b, 0),
-    [rowHours],
-  );
+  const totalHours = useMemo(() => Object.values(rowHours).reduce((a, b) => a + b, 0), [rowHours]);
   const totalDays = totalHours / 24;
 
   // Table 2
@@ -273,7 +314,8 @@ export function Calculator({ lang, setLang }: { lang: Lang; setLang: (l: Lang) =
   const effectiveSoldiers = manualSoldiersEff > 0 ? manualSoldiersEff : totalSoldiers;
   const powerSoldierUnitEff = eff(state.powerSoldierUnit, state.powerSoldierUnitMul);
   const powerValueNum = parseNum(state.powerValue);
-  const totalPower = powerSoldierUnitEff > 0 ? (effectiveSoldiers / powerSoldierUnitEff) * powerValueNum : 0;
+  const totalPower =
+    powerSoldierUnitEff > 0 ? (effectiveSoldiers / powerSoldierUnitEff) * powerValueNum : 0;
 
   // Table 4 — consumption
   const consSoldierEff = eff(state.consSoldierUnit, state.consSoldierUnitMul);
@@ -296,13 +338,19 @@ export function Calculator({ lang, setLang }: { lang: Lang; setLang: (l: Lang) =
     for (const k of RES_ORDER) out[k] = consPerSoldier[k] * effectiveSoldiers * discountMul;
     return out;
   }, [consPerSoldier, effectiveSoldiers, discountMul]);
-  const isConsumptionReady = consSoldierEff > 0 && RES_ORDER.every((k) => eff(state.consManual[k], state.consManualMul[k]) > 0);
+  const isConsumptionReady =
+    consSoldierEff > 0 &&
+    RES_ORDER.every((k) => eff(state.consManual[k], state.consManualMul[k]) > 0);
 
   const updateCell = (key: RowKey, field: "free" | "training" | "suitcase", raw: string) => {
     const cleaned = normalizeDigits(raw);
     setState((s) => ({ ...s, rows: { ...s.rows, [key]: { ...s.rows[key], [field]: cleaned } } }));
   };
-  const updateCellMul = (key: RowKey, field: "freeMul" | "trainingMul" | "suitcaseMul", val: string) => {
+  const updateCellMul = (
+    key: RowKey,
+    field: "freeMul" | "trainingMul" | "suitcaseMul",
+    val: string,
+  ) => {
     setState((s) => ({ ...s, rows: { ...s.rows, [key]: { ...s.rows[key], [field]: val } } }));
   };
 
@@ -312,7 +360,10 @@ export function Calculator({ lang, setLang }: { lang: Lang; setLang: (l: Lang) =
   };
 
   const copyTotal = async () => {
-    try { await navigator.clipboard.writeText(formatHours(totalHours)); showToast(t.copied); } catch {}
+    try {
+      await navigator.clipboard.writeText(formatHours(totalHours));
+      showToast(t.copied);
+    } catch {}
   };
 
   const exportExcel = () => {
@@ -357,7 +408,8 @@ export function Calculator({ lang, setLang }: { lang: Lang; setLang: (l: Lang) =
       if (row && (row.count != null || row.days || row.hours || row.minutes || row.seconds)) {
         setState((s) => ({
           ...s,
-          trainingUnit: row.count != null ? String(Math.max(1, Math.round(row.count))) : s.trainingUnit,
+          trainingUnit:
+            row.count != null ? String(Math.max(1, Math.round(row.count))) : s.trainingUnit,
           trainingUnitMul: "1",
           trainDays: row.days != null ? String(row.days) : s.trainDays,
           trainHours: row.hours != null ? String(row.hours) : s.trainHours,
@@ -376,7 +428,6 @@ export function Calculator({ lang, setLang }: { lang: Lang; setLang: (l: Lang) =
       recordActivity(ok ? "ocr_success" : "ocr_fail", performance.now() - started);
     }
   };
-
 
   const handlePowerImage = async (file: File) => {
     setBusy("power");
@@ -410,7 +461,6 @@ export function Calculator({ lang, setLang }: { lang: Lang; setLang: (l: Lang) =
     }
   };
 
-
   const handleConsumptionImage = async (file: File) => {
     setBusy("consumption");
     const started = performance.now();
@@ -434,11 +484,18 @@ export function Calculator({ lang, setLang }: { lang: Lang; setLang: (l: Lang) =
         crystal: compact.crystal.value,
       };
       const filledKeys: string[] = [];
-      RES_ORDER.forEach((k) => { if (next[k]) filledKeys.push(`t4.${k}`); });
+      RES_ORDER.forEach((k) => {
+        if (next[k]) filledKeys.push(`t4.${k}`);
+      });
       const batch = parseNum(out?.batchSoldiers);
-      if (filledKeys.length === 0 && batch <= 0) { showToast(t.aiError); return; }
+      if (filledKeys.length === 0 && batch <= 0) {
+        showToast(t.aiError);
+        return;
+      }
       const nextMul: Record<ResKey, string> = { ...state.consManualMul };
-      RES_ORDER.forEach((k) => { if (next[k]) nextMul[k] = compact[k].mul; });
+      RES_ORDER.forEach((k) => {
+        if (next[k]) nextMul[k] = compact[k].mul;
+      });
       setState((s) => ({
         ...s,
         consManual: { ...s.consManual, ...next },
@@ -457,8 +514,6 @@ export function Calculator({ lang, setLang }: { lang: Lang; setLang: (l: Lang) =
     }
   };
 
-
-
   const handleTasarihUpload = async (file: File) => {
     const dataUrl = await fileToDataUrl(file);
     setState((s) => ({ ...s, tasarihImage: dataUrl }));
@@ -468,7 +523,11 @@ export function Calculator({ lang, setLang }: { lang: Lang; setLang: (l: Lang) =
 
   // Small reusable multiplier select
   const MulSelect = ({
-    value, onChange, aiKey, list = MUL_UNITS, extraCls = "",
+    value,
+    onChange,
+    aiKey,
+    list = MUL_UNITS,
+    extraCls = "",
   }: {
     value: string;
     onChange: (v: string) => void;
@@ -479,10 +538,15 @@ export function Calculator({ lang, setLang }: { lang: Lang; setLang: (l: Lang) =
     <select
       className={`num-input compact !w-auto !px-1 !text-[10px] ${extraCls} ${aiKey ? aiCls(aiKey) : ""}`}
       value={value}
-      onChange={(e) => { if (aiKey) unmarkAi(aiKey); onChange(e.target.value); }}
+      onChange={(e) => {
+        if (aiKey) unmarkAi(aiKey);
+        onChange(e.target.value);
+      }}
     >
       {list.map((u) => (
-        <option key={u.v} value={u.v}>{t[u.k]}</option>
+        <option key={u.v} value={u.v}>
+          {t[u.k]}
+        </option>
       ))}
     </select>
   );
@@ -503,16 +567,25 @@ export function Calculator({ lang, setLang }: { lang: Lang; setLang: (l: Lang) =
       <main className="mx-auto max-w-md space-y-3 px-3 pt-3">
         {/* Top bar */}
         <div className="flex items-center justify-between gap-2">
-          <button onClick={() => setLang(lang === "ar" ? "en" : "ar")} className="btn btn-ghost px-3 text-[12px]">
+          <button
+            onClick={() => setLang(lang === "ar" ? "en" : "ar")}
+            className="btn btn-ghost px-3 text-[12px]"
+          >
             {t.langToggle}
           </button>
           <div className="text-center">
-            <div className="text-[13px] font-extrabold text-brand" style={{ fontFamily: "'Amiri','Scheherazade New',serif" }}>
+            <div
+              className="text-[13px] font-extrabold text-brand"
+              style={{ fontFamily: "'Amiri','Scheherazade New',serif" }}
+            >
               {t.bismillah}
             </div>
             <div className="mt-0.5 text-[9px] font-bold text-muted-foreground">{t.credit}</div>
           </div>
-          <button onClick={() => setTheme(theme === "dark" ? "light" : "dark")} className="btn btn-ghost px-3 text-[14px]">
+          <button
+            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+            className="btn btn-ghost px-3 text-[14px]"
+          >
             {theme === "dark" ? "☀" : "☾"}
           </button>
         </div>
@@ -537,7 +610,10 @@ export function Calculator({ lang, setLang }: { lang: Lang; setLang: (l: Lang) =
         {aiFilled.size > 0 && (
           <div className="flex items-center justify-between gap-2 rounded-xl border border-amber-400/60 bg-amber-50 px-3 py-1.5 text-[11px] font-bold text-amber-900 dark:bg-amber-950/40 dark:text-amber-200">
             <span>{t.aiFilled}</span>
-            <button onClick={() => setAiFilled(new Set())} className="btn btn-secondary !py-1 text-[10px]">
+            <button
+              onClick={() => setAiFilled(new Set())}
+              className="btn btn-secondary !py-1 text-[10px]"
+            >
               {t.confirmAll}
             </button>
           </div>
@@ -545,543 +621,729 @@ export function Calculator({ lang, setLang }: { lang: Lang; setLang: (l: Lang) =
 
         {/* TABLE 1 */}
         {activeTab === 0 && (
-        <section className="card-grad overflow-hidden">
-          <div className="flex items-center justify-between gap-2 border-b border-border px-3 py-2.5">
-            <h2 className="text-sm font-extrabold">{t.table1Title}</h2>
-            <label className="btn btn-secondary cursor-pointer !py-1 text-[10px]">
-              {state.tasarihImage ? t.removeImage : t.uploadTasarih}
-              <input
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onClick={(e) => {
-                  if (state.tasarihImage) {
-                    e.preventDefault();
-                    setState((s) => ({ ...s, tasarihImage: null }));
-                  }
-                }}
-                onChange={(e) => {
-                  const f = e.target.files?.[0];
-                  if (f) handleTasarihUpload(f);
-                  e.currentTarget.value = "";
-                }}
-              />
-            </label>
-          </div>
-
-          <div className="px-2 py-2">
-            <div
-              className="grid items-stretch gap-1.5 text-center text-[11px] font-bold text-muted-foreground"
-              style={{ gridTemplateColumns: "minmax(0,0.7fr) minmax(0,1.9fr) minmax(0,0.9fr)" }}
-            >
-              <div className="py-1">{t.colCategory}</div>
-              <div className="py-1 leading-tight">{t.colCount}</div>
-              <div className="py-1">{t.colHours}</div>
+          <section className="card-grad overflow-hidden">
+            <div className="flex items-center justify-between gap-2 border-b border-border px-3 py-2.5">
+              <h2 className="text-sm font-extrabold">{t.table1Title}</h2>
+              <label className="btn btn-secondary cursor-pointer !py-1 text-[10px]">
+                {state.tasarihImage ? t.removeImage : t.uploadTasarih}
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onClick={(e) => {
+                    if (state.tasarihImage) {
+                      e.preventDefault();
+                      setState((s) => ({ ...s, tasarihImage: null }));
+                    }
+                  }}
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f) handleTasarihUpload(f);
+                    e.currentTarget.value = "";
+                  }}
+                />
+              </label>
             </div>
 
-            <div className="mt-1 space-y-1.5">
-              {ROWS.map((r) => {
-                const v = state.rows[r.key];
-                const is2h = r.key === "2h";
-                const label = t[r.labelKey];
-                return (
-                  <div
-                    key={r.key}
-                    className="grid items-center gap-1.5 rounded-xl bg-[color-mix(in_oklab,var(--surface-2)_70%,transparent)] px-1.5 py-1.5"
-                    style={{ gridTemplateColumns: "minmax(0,0.7fr) minmax(0,1.9fr) minmax(0,0.9fr)" }}
-                  >
-                    <div className="min-w-0 truncate text-center text-[12px] font-bold">{label}</div>
-                    <div className="flex min-w-0 flex-col gap-1">
-                      <div className="flex items-center gap-1">
-                        <span className="cell-label">{t.free}</span>
-                        <input
-                          inputMode="decimal"
-                          className="num-input compact min-w-0 flex-1"
-                          value={v.free}
-                          onChange={(e) => updateCell(r.key, "free", e.target.value)}
-                          placeholder="0"
-                        />
-                        <MulSelect value={v.freeMul} onChange={(val) => updateCellMul(r.key, "freeMul", val)} extraCls="shrink-0" />
+            <div className="px-2 py-2">
+              <div
+                className="grid items-stretch gap-1.5 text-center text-[11px] font-bold text-muted-foreground"
+                style={{ gridTemplateColumns: "minmax(0,0.7fr) minmax(0,1.9fr) minmax(0,0.9fr)" }}
+              >
+                <div className="py-1">{t.colCategory}</div>
+                <div className="py-1 leading-tight">{t.colCount}</div>
+                <div className="py-1">{t.colHours}</div>
+              </div>
+
+              <div className="mt-1 space-y-1.5">
+                {ROWS.map((r) => {
+                  const v = state.rows[r.key];
+                  const is2h = r.key === "2h";
+                  const label = t[r.labelKey];
+                  return (
+                    <div
+                      key={r.key}
+                      className="grid items-center gap-1.5 rounded-xl bg-[color-mix(in_oklab,var(--surface-2)_70%,transparent)] px-1.5 py-1.5"
+                      style={{
+                        gridTemplateColumns: "minmax(0,0.7fr) minmax(0,1.9fr) minmax(0,0.9fr)",
+                      }}
+                    >
+                      <div className="min-w-0 truncate text-center text-[12px] font-bold">
+                        {label}
                       </div>
-                      <div className="flex items-center gap-1">
-                        <span className="cell-label">{t.training}</span>
-                        <input
-                          inputMode="decimal"
-                          className="num-input compact min-w-0 flex-1"
-                          value={v.training}
-                          onChange={(e) => updateCell(r.key, "training", e.target.value)}
-                          placeholder="0"
-                        />
-                        <MulSelect value={v.trainingMul} onChange={(val) => updateCellMul(r.key, "trainingMul", val)} extraCls="shrink-0" />
-                      </div>
-                      {is2h && (
+                      <div className="flex min-w-0 flex-col gap-1">
                         <div className="flex items-center gap-1">
-                          <span className="cell-label">{t.suitcase}</span>
+                          <span className="cell-label">{t.free}</span>
                           <input
                             inputMode="decimal"
                             className="num-input compact min-w-0 flex-1"
-                            value={v.suitcase ?? ""}
-                            onChange={(e) => updateCell(r.key, "suitcase", e.target.value)}
+                            value={v.free}
+                            onChange={(e) => updateCell(r.key, "free", e.target.value)}
                             placeholder="0"
                           />
-                          <MulSelect value={v.suitcaseMul ?? "1"} onChange={(val) => updateCellMul(r.key, "suitcaseMul", val)} extraCls="shrink-0" />
+                          <MulSelect
+                            value={v.freeMul}
+                            onChange={(val) => updateCellMul(r.key, "freeMul", val)}
+                            extraCls="shrink-0"
+                          />
                         </div>
-                      )}
-                    </div>
-                    <div className="min-w-0 truncate text-center text-[13px] font-bold tabular-nums" dir="ltr">
-                      {formatHours(rowHours[r.key])}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            <div
-              className="mt-2 grid items-center gap-1.5 rounded-xl px-2 py-2 text-center"
-              style={{
-                gridTemplateColumns: "minmax(0,0.7fr) minmax(0,1.9fr) minmax(0,0.9fr)",
-                background: "color-mix(in oklab, var(--brand) 14%, transparent)",
-              }}
-            >
-              <div className="text-[12px] font-extrabold">{t.totalHours}</div>
-              <div className="text-[12px] font-bold text-muted-foreground">—</div>
-              <div className="text-[18px] font-extrabold text-brand tabular-nums" dir="ltr">{formatHours(totalHours)}</div>
-            </div>
-            <div
-              className="mt-1.5 grid items-center gap-1.5 rounded-xl px-2 py-2 text-center"
-              style={{
-                gridTemplateColumns: "minmax(0,0.7fr) minmax(0,1.9fr) minmax(0,0.9fr)",
-                background: "color-mix(in oklab, var(--success) 18%, transparent)",
-              }}
-            >
-              <div className="text-[12px] font-extrabold">{t.totalDays}</div>
-              <div className="text-[12px] font-bold text-muted-foreground">—</div>
-              <div className="text-[18px] font-extrabold tabular-nums" style={{ color: "var(--success)" }} dir="ltr">
-                {formatHours(totalDays)}
-              </div>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-3 gap-1.5 border-t border-border bg-[color-mix(in_oklab,var(--surface-2)_60%,transparent)] p-2">
-            <button onClick={clearAll} className="btn btn-danger text-[12px]">{t.clearAll}</button>
-            <button onClick={copyTotal} className="btn btn-secondary text-[12px]">{t.copyTotal}</button>
-            <button onClick={exportExcel} className="btn btn-primary text-[12px]">{t.exportExcel}</button>
-          </div>
-        </section>
-        )}
-
-        {/* TABLE 2 */}
-        {activeTab === 1 && (
-        <section className="card-grad overflow-hidden">
-          <div className="border-b border-border px-3 py-2.5">
-            <h2 className="whitespace-pre-line text-sm font-extrabold leading-tight">{t.table2Title}</h2>
-            <p className="mt-1 text-[10px] font-bold text-muted-foreground">{t.soldiersNote}</p>
-          </div>
-          <ImageUpload
-            label={t.sendScreenshot}
-            busy={busy === "soldiers"}
-            busyLabel={t.processing}
-            onFile={handleSoldiersImage}
-          />
-          <OcrImageReview
-            src={state.ocrImg.soldiers}
-            show={state.ocrShow.soldiers}
-            onToggle={() => toggleOcrShow("soldiers")}
-            height={state.ocrHeight}
-            onHeightChange={(h) => setState((s) => ({ ...s, ocrHeight: h }))}
-            zoom={state.ocrZoom}
-            onZoomChange={(z) => setState((s) => ({ ...s, ocrZoom: z }))}
-            labels={{ show: t.showImage, hide: t.hideImage }}
-          />
-          <div className="space-y-2 p-2.5">
-            {/* Row 1: soldier count per cycle */}
-            <div className="rounded-xl bg-[color-mix(in_oklab,var(--surface-2)_70%,transparent)] p-2.5">
-              <div className="mb-1.5 text-[10px] font-bold text-muted-foreground">{t.soldier}</div>
-              <div className="flex items-center gap-1.5">
-                <input
-                  inputMode="decimal"
-                  className={`num-input compact flex-1 min-w-0 !text-[13px] ${aiCls("t2.unit")}`}
-                  value={state.trainingUnit}
-                  placeholder={t.enterSoldiers}
-                  onChange={(e) => { unmarkAi("t2.unit"); setState((s) => ({ ...s, trainingUnit: normalizeDigits(e.target.value) })); }}
-                />
-                <MulSelect value={state.trainingUnitMul} onChange={(v) => setState((s) => ({ ...s, trainingUnitMul: v }))} extraCls="shrink-0" />
-              </div>
-            </div>
-
-            {/* Row 2: training time */}
-            <div className="rounded-xl bg-[color-mix(in_oklab,var(--surface-2)_70%,transparent)] p-2.5">
-              <div className="mb-1.5 text-[10px] font-bold text-muted-foreground">{t.trainingSpeed}</div>
-              <div className="grid grid-cols-4 gap-1.5">
-                {(["Days", "Hours", "Minutes", "Seconds"] as const).map((unit) => {
-                  const map = { Days: "trainDays", Hours: "trainHours", Minutes: "trainMinutes", Seconds: "trainSeconds" } as const;
-                  const aiMap = { Days: "t2.days", Hours: "t2.hours", Minutes: "t2.minutes", Seconds: "t2.seconds" } as const;
-                  const phMap = { Days: t.days, Hours: t.hoursLbl, Minutes: t.minutesLbl, Seconds: t.secondsLbl } as const;
-                  const fieldKey = map[unit];
-                  const aiKey = aiMap[unit];
-                  return (
-                    <div key={unit} className="flex flex-col items-center gap-0.5">
-                      <input
-                        inputMode="numeric"
-                        className={`num-input compact w-full !text-[12px] text-center ${aiCls(aiKey)}`}
-                        value={state[fieldKey]}
-                        placeholder="0"
-                        onChange={(e) => {
-                          unmarkAi(aiKey);
-                          const v = normalizeDigits(e.target.value);
-                          setState((s) => ({ ...s, [fieldKey]: v }) as State);
-                        }}
-                      />
-                      <span className="text-[9px] font-bold text-muted-foreground">{phMap[unit]}</span>
+                        <div className="flex items-center gap-1">
+                          <span className="cell-label">{t.training}</span>
+                          <input
+                            inputMode="decimal"
+                            className="num-input compact min-w-0 flex-1"
+                            value={v.training}
+                            onChange={(e) => updateCell(r.key, "training", e.target.value)}
+                            placeholder="0"
+                          />
+                          <MulSelect
+                            value={v.trainingMul}
+                            onChange={(val) => updateCellMul(r.key, "trainingMul", val)}
+                            extraCls="shrink-0"
+                          />
+                        </div>
+                        {is2h && (
+                          <div className="flex items-center gap-1">
+                            <span className="cell-label">{t.suitcase}</span>
+                            <input
+                              inputMode="decimal"
+                              className="num-input compact min-w-0 flex-1"
+                              value={v.suitcase ?? ""}
+                              onChange={(e) => updateCell(r.key, "suitcase", e.target.value)}
+                              placeholder="0"
+                            />
+                            <MulSelect
+                              value={v.suitcaseMul ?? "1"}
+                              onChange={(val) => updateCellMul(r.key, "suitcaseMul", val)}
+                              extraCls="shrink-0"
+                            />
+                          </div>
+                        )}
+                      </div>
+                      <div
+                        className="min-w-0 truncate text-center text-[13px] font-bold tabular-nums"
+                        dir="ltr"
+                      >
+                        {formatHours(rowHours[r.key])}
+                      </div>
                     </div>
                   );
                 })}
               </div>
-            </div>
 
-            {/* Row 3: hours */}
-            <div className="rounded-xl bg-[color-mix(in_oklab,var(--surface-2)_70%,transparent)] p-2.5">
-              <div className="mb-1.5 flex items-center justify-between gap-2">
-                <span className="text-[10px] font-bold text-muted-foreground">{t.hoursCount}</span>
-                <span className="rounded-md bg-[color-mix(in_oklab,var(--brand)_12%,transparent)] px-2 py-0.5 text-[10px] font-extrabold tabular-nums" dir="ltr">
-                  {t.autoLinked}: {formatHours(totalHours)}
-                </span>
+              <div
+                className="mt-2 grid items-center gap-1.5 rounded-xl px-2 py-2 text-center"
+                style={{
+                  gridTemplateColumns: "minmax(0,0.7fr) minmax(0,1.9fr) minmax(0,0.9fr)",
+                  background: "color-mix(in oklab, var(--brand) 14%, transparent)",
+                }}
+              >
+                <div className="text-[12px] font-extrabold">{t.totalHours}</div>
+                <div className="text-[12px] font-bold text-muted-foreground">—</div>
+                <div className="text-[18px] font-extrabold text-brand tabular-nums" dir="ltr">
+                  {formatHours(totalHours)}
+                </div>
               </div>
-              <div className="flex items-center gap-1.5">
-                <input
-                  inputMode="decimal"
-                  className="num-input compact flex-1 min-w-0 !text-[13px]"
-                  value={state.manualHours}
-                  placeholder={t.manualHours}
-                  onChange={(e) => setState((s) => ({ ...s, manualHours: normalizeDigits(e.target.value) }))}
-                />
-                <MulSelect value={state.manualHoursMul} onChange={(v) => setState((s) => ({ ...s, manualHoursMul: v }))} extraCls="shrink-0" />
+              <div
+                className="mt-1.5 grid items-center gap-1.5 rounded-xl px-2 py-2 text-center"
+                style={{
+                  gridTemplateColumns: "minmax(0,0.7fr) minmax(0,1.9fr) minmax(0,0.9fr)",
+                  background: "color-mix(in oklab, var(--success) 18%, transparent)",
+                }}
+              >
+                <div className="text-[12px] font-extrabold">{t.totalDays}</div>
+                <div className="text-[12px] font-bold text-muted-foreground">—</div>
+                <div
+                  className="text-[18px] font-extrabold tabular-nums"
+                  style={{ color: "var(--success)" }}
+                  dir="ltr"
+                >
+                  {formatHours(totalDays)}
+                </div>
               </div>
             </div>
 
-            {/* Total: full width at bottom */}
-            <div
-              className="rounded-xl px-3 py-3 text-center"
-              style={{ background: "color-mix(in oklab, var(--brand) 18%, transparent)" }}
-            >
-              <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">{t.totalSoldiers}</div>
-              <div className="mt-1 text-[22px] font-extrabold text-brand" dir="ltr">{formatBigUnit(totalSoldiers, lang)}</div>
-              <div className="mt-0.5 text-[10px] tabular-nums text-muted-foreground" dir="ltr">{formatNumber(Math.round(totalSoldiers))}</div>
+            <div className="grid grid-cols-3 gap-1.5 border-t border-border bg-[color-mix(in_oklab,var(--surface-2)_60%,transparent)] p-2">
+              <button onClick={clearAll} className="btn btn-danger text-[12px]">
+                {t.clearAll}
+              </button>
+              <button onClick={copyTotal} className="btn btn-secondary text-[12px]">
+                {t.copyTotal}
+              </button>
+              <button onClick={exportExcel} className="btn btn-primary text-[12px]">
+                {t.exportExcel}
+              </button>
             </div>
-          </div>
-
-        </section>
+          </section>
         )}
 
-        {/* TABLE 3 */}
-        {activeTab === 2 && (
-        <section className="card-grad overflow-hidden">
-          <div className="border-b border-border px-3 py-2.5">
-            <h2 className="whitespace-pre-line text-sm font-extrabold leading-tight">{t.table3Title}</h2>
-          </div>
-          <div className="mx-3 mt-2 rounded-lg border-2 border-amber-500/70 bg-amber-50 px-2.5 py-2 text-[11px] font-extrabold leading-snug text-amber-900 dark:bg-amber-950/40 dark:text-amber-200">
-            ⚠ {t.powerNote}
-          </div>
-          <ImageUpload
-            label={t.sendScreenshot}
-            busy={busy === "power"}
-            busyLabel={t.processing}
-            onFile={handlePowerImage}
-          />
-          <OcrImageReview
-            src={state.ocrImg.power}
-            show={state.ocrShow.power}
-            onToggle={() => toggleOcrShow("power")}
-            height={state.ocrHeight}
-            onHeightChange={(h) => setState((s) => ({ ...s, ocrHeight: h }))}
-            zoom={state.ocrZoom}
-            onZoomChange={(z) => setState((s) => ({ ...s, ocrZoom: z }))}
-            labels={{ show: t.showImage, hide: t.hideImage }}
-          />
-          <div className="space-y-2 p-2.5">
-            {/* Row 1: soldier count */}
-            <div className="rounded-xl bg-[color-mix(in_oklab,var(--surface-2)_70%,transparent)] p-2.5">
-              <div className="mb-1.5 flex items-center justify-between gap-2">
-                <span className="text-[10px] font-bold text-muted-foreground">{t.soldiersCount}</span>
-                <span className="rounded-md bg-[color-mix(in_oklab,var(--brand)_12%,transparent)] px-2 py-0.5 text-[10px] font-extrabold tabular-nums" dir="ltr">
-                  {t.autoLinked}: {formatBigUnit(totalSoldiers, lang)}
-                </span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <input
-                  inputMode="decimal"
-                  className="num-input compact flex-1 min-w-0 !text-[13px]"
-                  value={state.manualSoldiers}
-                  placeholder={t.manualSoldiers}
-                  onChange={(e) => setState((s) => ({ ...s, manualSoldiers: normalizeDigits(e.target.value) }))}
-                />
-                <MulSelect value={state.manualSoldiersMul} onChange={(v) => setState((s) => ({ ...s, manualSoldiersMul: v }))} extraCls="shrink-0" />
-              </div>
+        {/* TABLE 2 */}
+        {activeTab === 1 && (
+          <section className="card-grad overflow-hidden">
+            <div className="border-b border-border px-3 py-2.5">
+              <h2 className="whitespace-pre-line text-sm font-extrabold leading-tight">
+                {t.table2Title}
+              </h2>
+              <p className="mt-1 text-[10px] font-bold text-muted-foreground">{t.soldiersNote}</p>
             </div>
-
-            {/* Row 2: per-unit soldier */}
-            <div className="rounded-xl bg-[color-mix(in_oklab,var(--surface-2)_70%,transparent)] p-2.5">
-              <div className="mb-1.5 text-[10px] font-bold text-muted-foreground">{t.soldier}</div>
-              <div className="flex items-center gap-1.5">
-                <input
-                  inputMode="decimal"
-                  className={`num-input compact flex-1 min-w-0 !text-[13px] ${aiCls("t3.unit")}`}
-                  value={state.powerSoldierUnit}
-                  placeholder={t.enterSoldiers}
-                  onChange={(e) => { unmarkAi("t3.unit"); setState((s) => ({ ...s, powerSoldierUnit: normalizeDigits(e.target.value) })); }}
-                />
-                <MulSelect value={state.powerSoldierUnitMul} onChange={(v) => setState((s) => ({ ...s, powerSoldierUnitMul: v }))} extraCls="shrink-0" />
-              </div>
-            </div>
-
-            {/* Row 3: power value */}
-            <div className="rounded-xl bg-[color-mix(in_oklab,var(--surface-2)_70%,transparent)] p-2.5">
-              <div className="mb-1.5 text-[10px] font-bold text-muted-foreground">{t.powerValue}</div>
-              <input
-                inputMode="decimal"
-                className={`num-input compact w-full !text-[13px] ${aiCls("t3.power")}`}
-                value={state.powerValue}
-                placeholder={t.powerUnitFree}
-                onChange={(e) => { unmarkAi("t3.power"); setState((s) => ({ ...s, powerValue: normalizeDigits(e.target.value) })); }}
-              />
-            </div>
-
-            {/* Total: full width */}
-            <div
-              className="rounded-xl px-3 py-3 text-center"
-              style={{ background: "color-mix(in oklab, var(--brand) 18%, transparent)" }}
-            >
-              <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">{t.powerIncrease}</div>
-              <div className="mt-1 text-[22px] font-extrabold text-brand" dir="ltr">{formatBigUnit(totalPower, lang)}</div>
-              <div className="mt-0.5 text-[10px] tabular-nums text-muted-foreground" dir="ltr">{formatNumber(Math.round(totalPower))}</div>
-            </div>
-          </div>
-
-        </section>
-        )}
-
-        {/* TABLE 4 — Consumption */}
-        {activeTab === 3 && (
-        <section className="card-grad overflow-hidden">
-          <div className="border-b border-border px-3 py-2.5">
-            <h2 className="text-sm font-extrabold">{t.table4Title}</h2>
-            <p className="mt-1 text-[10px] font-bold text-muted-foreground">{t.consumptionNote}</p>
-          </div>
-          <ImageUpload
-            label={t.sendScreenshot}
-            busy={busy === "consumption"}
-            busyLabel={t.processing}
-            onFile={handleConsumptionImage}
-          />
-          <OcrImageReview
-            src={state.ocrImg.consumption}
-            show={state.ocrShow.consumption}
-            onToggle={() => toggleOcrShow("consumption")}
-            height={state.ocrHeight}
-            onHeightChange={(h) => setState((s) => ({ ...s, ocrHeight: h }))}
-            zoom={state.ocrZoom}
-            onZoomChange={(z) => setState((s) => ({ ...s, ocrZoom: z }))}
-            labels={{ show: t.showImage, hide: t.hideImage }}
-          />
-          <div className="space-y-2 p-2.5">
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <div className="text-center text-[9px] font-bold text-muted-foreground">{t.soldierCount}</div>
-                <div className="mt-1 flex items-center gap-1">
+            <ImageUpload
+              label={t.sendScreenshot}
+              busy={busy === "soldiers"}
+              busyLabel={t.processing}
+              onFile={handleSoldiersImage}
+            />
+            <OcrImageReview
+              src={state.ocrImg.soldiers}
+              show={state.ocrShow.soldiers}
+              onToggle={() => toggleOcrShow("soldiers")}
+              height={state.ocrHeight}
+              onHeightChange={(h) => setState((s) => ({ ...s, ocrHeight: h }))}
+              zoom={state.ocrZoom}
+              onZoomChange={(z) => setState((s) => ({ ...s, ocrZoom: z }))}
+              labels={{ show: t.showImage, hide: t.hideImage }}
+            />
+            <div className="space-y-2 p-2.5">
+              {/* Row 1: soldier count per cycle */}
+              <div className="rounded-xl bg-[color-mix(in_oklab,var(--surface-2)_70%,transparent)] p-2.5">
+                <div className="mb-1.5 text-[10px] font-bold text-muted-foreground">
+                  {t.soldier}
+                </div>
+                <div className="flex items-center gap-1.5">
                   <input
                     inputMode="decimal"
-                    className={`num-input compact ${aiCls("t4.unit")}`}
-                    value={state.consSoldierUnit}
+                    className={`num-input compact flex-1 min-w-0 !text-[13px] ${aiCls("t2.unit")}`}
+                    value={state.trainingUnit}
                     placeholder={t.enterSoldiers}
-                    onChange={(e) => { unmarkAi("t4.unit"); setState((s) => ({ ...s, consSoldierUnit: normalizeDigits(e.target.value) })); }}
-                  />
-                  <MulSelect value={state.consSoldierUnitMul} onChange={(v) => setState((s) => ({ ...s, consSoldierUnitMul: v }))} />
-                </div>
-              </div>
-              <div>
-                <div className="text-center text-[9px] font-bold text-muted-foreground">{t.discount}</div>
-                <select
-                  className="num-input compact mt-1"
-                  value={state.consDiscount}
-                  onChange={(e) => setState((s) => ({ ...s, consDiscount: e.target.value }))}
-                >
-                  {DISCOUNTS.map((d) => (
-                    <option key={d} value={d}>{d === "0" ? t.noDiscount : `${d}%`}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            {/* batch consumption inputs */}
-            <div className="rounded-xl bg-[color-mix(in_oklab,var(--surface-2)_70%,transparent)] p-2">
-              <div className="grid grid-cols-2 gap-2">
-                {(["wheat", "wood"] as const).map((k) => (
-                  <ResourceInput
-                    key={k}
-                    label={t[k]}
-                    value={state.consManual[k]}
-                    mul={state.consManualMul[k]}
-                    aiClass={aiCls(`t4.${k}`)}
-                    units={MUL_UNITS}
-                    t={t}
-                    onValue={(v) => {
-                      unmarkAi(`t4.${k}`);
-                      setState((s) => ({ ...s, consManual: { ...s.consManual, [k]: normalizeDigits(v) } }));
-                    }}
-                    onMul={(v) => {
-                      unmarkAi(`t4.${k}`);
-                      setState((s) => ({ ...s, consManualMul: { ...s.consManualMul, [k]: v } }));
+                    onChange={(e) => {
+                      unmarkAi("t2.unit");
+                      setState((s) => ({ ...s, trainingUnit: normalizeDigits(e.target.value) }));
                     }}
                   />
-                ))}
-              </div>
-              <div className="mt-2 grid grid-cols-3 gap-2">
-                {(["iron", "silver", "crystal"] as const).map((k) => (
-                  <ResourceInput
-                    key={k}
-                    label={t[k]}
-                    value={state.consManual[k]}
-                    mul={state.consManualMul[k]}
-                    aiClass={aiCls(`t4.${k}`)}
-                    units={MUL_UNITS}
-                    t={t}
-                    onValue={(v) => {
-                      unmarkAi(`t4.${k}`);
-                      setState((s) => ({ ...s, consManual: { ...s.consManual, [k]: normalizeDigits(v) } }));
-                    }}
-                    onMul={(v) => {
-                      unmarkAi(`t4.${k}`);
-                      setState((s) => ({ ...s, consManualMul: { ...s.consManualMul, [k]: v } }));
-                    }}
+                  <MulSelect
+                    value={state.trainingUnitMul}
+                    onChange={(v) => setState((s) => ({ ...s, trainingUnitMul: v }))}
+                    extraCls="shrink-0"
                   />
-                ))}
-              </div>
-              <div className="px-2 pb-1 text-center text-[9px] text-muted-foreground">
-                {t.perSoldiersFor} <span dir="ltr" className="tabular-nums">{consSoldierEff > 0 ? formatBigUnit(consSoldierEff, lang) : "—"}</span> {t.soldier}
-              </div>
-            </div>
-
-            {isConsumptionReady && (
-              <div className="rounded-xl border border-brand/30 bg-[color-mix(in_oklab,var(--brand)_8%,transparent)] p-2">
-                <div className="mb-1 text-center text-[10px] font-bold text-muted-foreground">
-                  {t.autoFromTable2}: <span className="tabular-nums" dir="ltr">{formatNumber(Math.round(effectiveSoldiers))}</span>
-                </div>
-                <div className="grid grid-cols-5 gap-0.5 text-center">
-                  {RES_ORDER.map((k) => (
-                    <div key={k} className="rounded-md bg-background/40 px-0.5 py-1">
-                      <div className="text-[8px] font-bold text-muted-foreground">{t[k]}</div>
-                      <div className="text-[10px] font-extrabold tabular-nums" dir="ltr">{formatBigUnit(consTotal[k], lang)}</div>
-                    </div>
-                  ))}
                 </div>
               </div>
-            )}
 
-            {/* Grand summary */}
-            <div className="rounded-xl border border-amber-400/40 bg-gradient-to-br from-amber-50 to-orange-50 p-3 dark:from-amber-950/40 dark:to-orange-950/30">
-              <div className="mb-2 text-center text-[11px] font-extrabold text-amber-900 dark:text-amber-200">{t.summaryTitle}</div>
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between gap-2 rounded-lg bg-background/60 px-2 py-1.5">
-                  <span className="text-[10px] font-bold text-muted-foreground">{t.sumHours}</span>
-                  <span className="text-[12px] font-extrabold text-brand tabular-nums" dir="ltr">{formatHours(totalHours)}</span>
+              {/* Row 2: training time */}
+              <div className="rounded-xl bg-[color-mix(in_oklab,var(--surface-2)_70%,transparent)] p-2.5">
+                <div className="mb-1.5 text-[10px] font-bold text-muted-foreground">
+                  {t.trainingSpeed}
                 </div>
-                <div className="flex items-center justify-between gap-2 rounded-lg bg-background/60 px-2 py-1.5">
-                  <span className="text-[10px] font-bold text-muted-foreground">{t.sumSoldiers}</span>
-                  <span className="text-[12px] font-extrabold text-brand tabular-nums" dir="ltr">{formatBigUnit(effectiveSoldiers, lang)}</span>
-                </div>
-                <div className="flex items-center justify-between gap-2 rounded-lg bg-background/60 px-2 py-1.5">
-                  <span className="text-[10px] font-bold text-muted-foreground">{t.sumPower}</span>
-                  <span className="text-[12px] font-extrabold text-brand tabular-nums" dir="ltr">{formatBigUnit(totalPower, lang)}</span>
-                </div>
-                <div className="rounded-lg bg-background/60 px-2 py-1.5">
-                  <div className="mb-1 text-center text-[10px] font-bold text-muted-foreground">{t.sumResources}</div>
-                  <div className="grid grid-cols-5 gap-1 text-center">
-                    {RES_ORDER.map((k) => (
-                      <div key={k}>
-                        <div className="text-[8px] font-bold text-muted-foreground">{t[k]}</div>
-                        <div className="text-[10px] font-extrabold tabular-nums" dir="ltr">{isConsumptionReady ? formatBigUnit(consTotal[k], lang) : "—"}</div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-        )}
-
-        {/* TABLE 5 — Boxes */}
-        {activeTab === 4 && (() => {
-          const visibleBoxes = BOXES.filter((b) => !b.woodOnly || state.resource === "wood");
-          const totalRes = visibleBoxes.reduce((acc, b) => acc + parseNum(state.boxes[b.key]) * b.value, 0);
-          const iron = totalRes / 6;
-          const silver = totalRes / 24;
-          const resName = state.resource === "wood" ? t.wood : t.wheat;
-          const fmtUnit = (n: number, divisor: number, unitLabel: string, name: string) => {
-            const v = n / divisor;
-            return `${v.toLocaleString("en-US", { maximumFractionDigits: 2 })} ${unitLabel} ${name}`;
-          };
-          return (
-            <section className="card-grad overflow-hidden">
-              <div className="flex items-center justify-between gap-2 border-b border-border px-3 py-2.5">
-                <h2 className="text-sm font-extrabold">{t.table5Title}</h2>
-                <select
-                  className="num-input compact !w-auto"
-                  value={state.resource}
-                  onChange={(e) => setState((s) => ({ ...s, resource: e.target.value as "wood" | "wheat" }))}
-                >
-                  <option value="wood">{t.wood}</option>
-                  <option value="wheat">{t.wheat}</option>
-                </select>
-              </div>
-
-              <div className="px-2 py-2">
-                <div
-                  className="grid items-stretch gap-1.5 text-center text-[11px] font-bold text-muted-foreground"
-                  style={{ gridTemplateColumns: "minmax(0,1.4fr) minmax(0,1fr)" }}
-                >
-                  <div className="py-1">{t.boxType}</div>
-                  <div className="py-1">{t.boxCount}</div>
-                </div>
-
-                <div className="mt-1 space-y-1.5">
-                  {visibleBoxes.map((b) => {
-                    const label = `${t[b.labelKey]} ${resName}`;
+                <div className="grid grid-cols-4 gap-1.5">
+                  {(["Days", "Hours", "Minutes", "Seconds"] as const).map((unit) => {
+                    const map = {
+                      Days: "trainDays",
+                      Hours: "trainHours",
+                      Minutes: "trainMinutes",
+                      Seconds: "trainSeconds",
+                    } as const;
+                    const aiMap = {
+                      Days: "t2.days",
+                      Hours: "t2.hours",
+                      Minutes: "t2.minutes",
+                      Seconds: "t2.seconds",
+                    } as const;
+                    const phMap = {
+                      Days: t.days,
+                      Hours: t.hoursLbl,
+                      Minutes: t.minutesLbl,
+                      Seconds: t.secondsLbl,
+                    } as const;
+                    const fieldKey = map[unit];
+                    const aiKey = aiMap[unit];
                     return (
-                      <div
-                        key={b.key}
-                        className="grid items-center gap-1.5 rounded-xl bg-[color-mix(in_oklab,var(--surface-2)_70%,transparent)] px-2 py-1.5"
-                        style={{ gridTemplateColumns: "minmax(0,1.4fr) minmax(0,1fr)" }}
-                      >
-                        <div className="min-w-0 truncate text-center text-[12px] font-bold">{label}</div>
+                      <div key={unit} className="flex flex-col items-center gap-0.5">
                         <input
-                          inputMode="decimal"
-                          className="num-input compact"
-                          value={state.boxes[b.key]}
+                          inputMode="numeric"
+                          className={`num-input compact w-full !text-[12px] text-center ${aiCls(aiKey)}`}
+                          value={state[fieldKey]}
                           placeholder="0"
-                          onChange={(e) =>
-                            setState((s) => ({ ...s, boxes: { ...s.boxes, [b.key]: normalizeDigits(e.target.value) } }))
-                          }
+                          onChange={(e) => {
+                            unmarkAi(aiKey);
+                            const v = normalizeDigits(e.target.value);
+                            setState((s) => ({ ...s, [fieldKey]: v }) as State);
+                          }}
                         />
+                        <span className="text-[9px] font-bold text-muted-foreground">
+                          {phMap[unit]}
+                        </span>
                       </div>
                     );
                   })}
                 </div>
+              </div>
 
-                <div className="mt-3 space-y-1.5">
-                  <ReadonlyResult label={`${t.totalResource} ${resName}`} value={fmtUnit(totalRes, 1e9, t.unitBillion, resName)} tone="brand" />
-                  <ReadonlyResult label={t.iron} value={fmtUnit(iron, 1e6, t.unitMillion, t.iron)} tone="success" />
-                  <ReadonlyResult label={t.silver} value={fmtUnit(silver, 1e6, t.unitMillion, t.silver)} />
+              {/* Row 3: hours */}
+              <div className="rounded-xl bg-[color-mix(in_oklab,var(--surface-2)_70%,transparent)] p-2.5">
+                <div className="mb-1.5 flex items-center justify-between gap-2">
+                  <span className="text-[10px] font-bold text-muted-foreground">
+                    {t.hoursCount}
+                  </span>
+                  <span
+                    className="rounded-md bg-[color-mix(in_oklab,var(--brand)_12%,transparent)] px-2 py-0.5 text-[10px] font-extrabold tabular-nums"
+                    dir="ltr"
+                  >
+                    {t.autoLinked}: {formatHours(totalHours)}
+                  </span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <input
+                    inputMode="decimal"
+                    className="num-input compact flex-1 min-w-0 !text-[13px]"
+                    value={state.manualHours}
+                    placeholder={t.manualHours}
+                    onChange={(e) =>
+                      setState((s) => ({ ...s, manualHours: normalizeDigits(e.target.value) }))
+                    }
+                  />
+                  <MulSelect
+                    value={state.manualHoursMul}
+                    onChange={(v) => setState((s) => ({ ...s, manualHoursMul: v }))}
+                    extraCls="shrink-0"
+                  />
                 </div>
               </div>
-            </section>
-          );
-        })()}
+
+              {/* Total: full width at bottom */}
+              <div
+                className="rounded-xl px-3 py-3 text-center"
+                style={{ background: "color-mix(in oklab, var(--brand) 18%, transparent)" }}
+              >
+                <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                  {t.totalSoldiers}
+                </div>
+                <div className="mt-1 text-[22px] font-extrabold text-brand" dir="ltr">
+                  {formatBigUnit(totalSoldiers, lang)}
+                </div>
+                <div className="mt-0.5 text-[10px] tabular-nums text-muted-foreground" dir="ltr">
+                  {formatNumber(Math.round(totalSoldiers))}
+                </div>
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* TABLE 3 */}
+        {activeTab === 2 && (
+          <section className="card-grad overflow-hidden">
+            <div className="border-b border-border px-3 py-2.5">
+              <h2 className="whitespace-pre-line text-sm font-extrabold leading-tight">
+                {t.table3Title}
+              </h2>
+            </div>
+            <div className="mx-3 mt-2 rounded-lg border-2 border-amber-500/70 bg-amber-50 px-2.5 py-2 text-[11px] font-extrabold leading-snug text-amber-900 dark:bg-amber-950/40 dark:text-amber-200">
+              ⚠ {t.powerNote}
+            </div>
+            <ImageUpload
+              label={t.sendScreenshot}
+              busy={busy === "power"}
+              busyLabel={t.processing}
+              onFile={handlePowerImage}
+            />
+            <OcrImageReview
+              src={state.ocrImg.power}
+              show={state.ocrShow.power}
+              onToggle={() => toggleOcrShow("power")}
+              height={state.ocrHeight}
+              onHeightChange={(h) => setState((s) => ({ ...s, ocrHeight: h }))}
+              zoom={state.ocrZoom}
+              onZoomChange={(z) => setState((s) => ({ ...s, ocrZoom: z }))}
+              labels={{ show: t.showImage, hide: t.hideImage }}
+            />
+            <div className="space-y-2 p-2.5">
+              {/* Row 1: soldier count */}
+              <div className="rounded-xl bg-[color-mix(in_oklab,var(--surface-2)_70%,transparent)] p-2.5">
+                <div className="mb-1.5 flex items-center justify-between gap-2">
+                  <span className="text-[10px] font-bold text-muted-foreground">
+                    {t.soldiersCount}
+                  </span>
+                  <span
+                    className="rounded-md bg-[color-mix(in_oklab,var(--brand)_12%,transparent)] px-2 py-0.5 text-[10px] font-extrabold tabular-nums"
+                    dir="ltr"
+                  >
+                    {t.autoLinked}: {formatBigUnit(totalSoldiers, lang)}
+                  </span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <input
+                    inputMode="decimal"
+                    className="num-input compact flex-1 min-w-0 !text-[13px]"
+                    value={state.manualSoldiers}
+                    placeholder={t.manualSoldiers}
+                    onChange={(e) =>
+                      setState((s) => ({ ...s, manualSoldiers: normalizeDigits(e.target.value) }))
+                    }
+                  />
+                  <MulSelect
+                    value={state.manualSoldiersMul}
+                    onChange={(v) => setState((s) => ({ ...s, manualSoldiersMul: v }))}
+                    extraCls="shrink-0"
+                  />
+                </div>
+              </div>
+
+              {/* Row 2: per-unit soldier */}
+              <div className="rounded-xl bg-[color-mix(in_oklab,var(--surface-2)_70%,transparent)] p-2.5">
+                <div className="mb-1.5 text-[10px] font-bold text-muted-foreground">
+                  {t.soldier}
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <input
+                    inputMode="decimal"
+                    className={`num-input compact flex-1 min-w-0 !text-[13px] ${aiCls("t3.unit")}`}
+                    value={state.powerSoldierUnit}
+                    placeholder={t.enterSoldiers}
+                    onChange={(e) => {
+                      unmarkAi("t3.unit");
+                      setState((s) => ({
+                        ...s,
+                        powerSoldierUnit: normalizeDigits(e.target.value),
+                      }));
+                    }}
+                  />
+                  <MulSelect
+                    value={state.powerSoldierUnitMul}
+                    onChange={(v) => setState((s) => ({ ...s, powerSoldierUnitMul: v }))}
+                    extraCls="shrink-0"
+                  />
+                </div>
+              </div>
+
+              {/* Row 3: power value */}
+              <div className="rounded-xl bg-[color-mix(in_oklab,var(--surface-2)_70%,transparent)] p-2.5">
+                <div className="mb-1.5 text-[10px] font-bold text-muted-foreground">
+                  {t.powerValue}
+                </div>
+                <input
+                  inputMode="decimal"
+                  className={`num-input compact w-full !text-[13px] ${aiCls("t3.power")}`}
+                  value={state.powerValue}
+                  placeholder={t.powerUnitFree}
+                  onChange={(e) => {
+                    unmarkAi("t3.power");
+                    setState((s) => ({ ...s, powerValue: normalizeDigits(e.target.value) }));
+                  }}
+                />
+              </div>
+
+              {/* Total: full width */}
+              <div
+                className="rounded-xl px-3 py-3 text-center"
+                style={{ background: "color-mix(in oklab, var(--brand) 18%, transparent)" }}
+              >
+                <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                  {t.powerIncrease}
+                </div>
+                <div className="mt-1 text-[22px] font-extrabold text-brand" dir="ltr">
+                  {formatBigUnit(totalPower, lang)}
+                </div>
+                <div className="mt-0.5 text-[10px] tabular-nums text-muted-foreground" dir="ltr">
+                  {formatNumber(Math.round(totalPower))}
+                </div>
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* TABLE 4 — Consumption */}
+        {activeTab === 3 && (
+          <section className="card-grad overflow-hidden">
+            <div className="border-b border-border px-3 py-2.5">
+              <h2 className="text-sm font-extrabold">{t.table4Title}</h2>
+              <p className="mt-1 text-[10px] font-bold text-muted-foreground">
+                {t.consumptionNote}
+              </p>
+            </div>
+            <ImageUpload
+              label={t.sendScreenshot}
+              busy={busy === "consumption"}
+              busyLabel={t.processing}
+              onFile={handleConsumptionImage}
+            />
+            <OcrImageReview
+              src={state.ocrImg.consumption}
+              show={state.ocrShow.consumption}
+              onToggle={() => toggleOcrShow("consumption")}
+              height={state.ocrHeight}
+              onHeightChange={(h) => setState((s) => ({ ...s, ocrHeight: h }))}
+              zoom={state.ocrZoom}
+              onZoomChange={(z) => setState((s) => ({ ...s, ocrZoom: z }))}
+              labels={{ show: t.showImage, hide: t.hideImage }}
+            />
+            <div className="space-y-2 p-2.5">
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <div className="text-center text-[9px] font-bold text-muted-foreground">
+                    {t.soldierCount}
+                  </div>
+                  <div className="mt-1 flex items-center gap-1">
+                    <input
+                      inputMode="decimal"
+                      className={`num-input compact ${aiCls("t4.unit")}`}
+                      value={state.consSoldierUnit}
+                      placeholder={t.enterSoldiers}
+                      onChange={(e) => {
+                        unmarkAi("t4.unit");
+                        setState((s) => ({
+                          ...s,
+                          consSoldierUnit: normalizeDigits(e.target.value),
+                        }));
+                      }}
+                    />
+                    <MulSelect
+                      value={state.consSoldierUnitMul}
+                      onChange={(v) => setState((s) => ({ ...s, consSoldierUnitMul: v }))}
+                    />
+                  </div>
+                </div>
+                <div>
+                  <div className="text-center text-[9px] font-bold text-muted-foreground">
+                    {t.discount}
+                  </div>
+                  <select
+                    className="num-input compact mt-1"
+                    value={state.consDiscount}
+                    onChange={(e) => setState((s) => ({ ...s, consDiscount: e.target.value }))}
+                  >
+                    {DISCOUNTS.map((d) => (
+                      <option key={d} value={d}>
+                        {d === "0" ? t.noDiscount : `${d}%`}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* batch consumption inputs */}
+              <div className="rounded-xl bg-[color-mix(in_oklab,var(--surface-2)_70%,transparent)] p-2">
+                <div className="grid grid-cols-2 gap-2">
+                  {(["wheat", "wood"] as const).map((k) => (
+                    <ResourceInput
+                      key={k}
+                      label={t[k]}
+                      value={state.consManual[k]}
+                      mul={state.consManualMul[k]}
+                      aiClass={aiCls(`t4.${k}`)}
+                      units={MUL_UNITS}
+                      t={t}
+                      onValue={(v) => {
+                        unmarkAi(`t4.${k}`);
+                        setState((s) => ({
+                          ...s,
+                          consManual: { ...s.consManual, [k]: normalizeDigits(v) },
+                        }));
+                      }}
+                      onMul={(v) => {
+                        unmarkAi(`t4.${k}`);
+                        setState((s) => ({ ...s, consManualMul: { ...s.consManualMul, [k]: v } }));
+                      }}
+                    />
+                  ))}
+                </div>
+                <div className="mt-2 grid grid-cols-3 gap-2">
+                  {(["iron", "silver", "crystal"] as const).map((k) => (
+                    <ResourceInput
+                      key={k}
+                      label={t[k]}
+                      value={state.consManual[k]}
+                      mul={state.consManualMul[k]}
+                      aiClass={aiCls(`t4.${k}`)}
+                      units={MUL_UNITS}
+                      t={t}
+                      onValue={(v) => {
+                        unmarkAi(`t4.${k}`);
+                        setState((s) => ({
+                          ...s,
+                          consManual: { ...s.consManual, [k]: normalizeDigits(v) },
+                        }));
+                      }}
+                      onMul={(v) => {
+                        unmarkAi(`t4.${k}`);
+                        setState((s) => ({ ...s, consManualMul: { ...s.consManualMul, [k]: v } }));
+                      }}
+                    />
+                  ))}
+                </div>
+                <div className="px-2 pb-1 text-center text-[9px] text-muted-foreground">
+                  {t.perSoldiersFor}{" "}
+                  <span dir="ltr" className="tabular-nums">
+                    {consSoldierEff > 0 ? formatBigUnit(consSoldierEff, lang) : "—"}
+                  </span>{" "}
+                  {t.soldier}
+                </div>
+              </div>
+
+              {isConsumptionReady && (
+                <div className="rounded-xl border border-brand/30 bg-[color-mix(in_oklab,var(--brand)_8%,transparent)] p-2">
+                  <div className="mb-1 text-center text-[10px] font-bold text-muted-foreground">
+                    {t.autoFromTable2}:{" "}
+                    <span className="tabular-nums" dir="ltr">
+                      {formatNumber(Math.round(effectiveSoldiers))}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-5 gap-0.5 text-center">
+                    {RES_ORDER.map((k) => (
+                      <div key={k} className="rounded-md bg-background/40 px-0.5 py-1">
+                        <div className="text-[8px] font-bold text-muted-foreground">{t[k]}</div>
+                        <div className="text-[10px] font-extrabold tabular-nums" dir="ltr">
+                          {formatBigUnit(consTotal[k], lang)}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Grand summary */}
+              <div className="rounded-xl border border-amber-400/40 bg-gradient-to-br from-amber-50 to-orange-50 p-3 dark:from-amber-950/40 dark:to-orange-950/30">
+                <div className="mb-2 text-center text-[11px] font-extrabold text-amber-900 dark:text-amber-200">
+                  {t.summaryTitle}
+                </div>
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between gap-2 rounded-lg bg-background/60 px-2 py-1.5">
+                    <span className="text-[10px] font-bold text-muted-foreground">
+                      {t.sumHours}
+                    </span>
+                    <span className="text-[12px] font-extrabold text-brand tabular-nums" dir="ltr">
+                      {formatHours(totalHours)}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between gap-2 rounded-lg bg-background/60 px-2 py-1.5">
+                    <span className="text-[10px] font-bold text-muted-foreground">
+                      {t.sumSoldiers}
+                    </span>
+                    <span className="text-[12px] font-extrabold text-brand tabular-nums" dir="ltr">
+                      {formatBigUnit(effectiveSoldiers, lang)}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between gap-2 rounded-lg bg-background/60 px-2 py-1.5">
+                    <span className="text-[10px] font-bold text-muted-foreground">
+                      {t.sumPower}
+                    </span>
+                    <span className="text-[12px] font-extrabold text-brand tabular-nums" dir="ltr">
+                      {formatBigUnit(totalPower, lang)}
+                    </span>
+                  </div>
+                  <div className="rounded-lg bg-background/60 px-2 py-1.5">
+                    <div className="mb-1 text-center text-[10px] font-bold text-muted-foreground">
+                      {t.sumResources}
+                    </div>
+                    <div className="grid grid-cols-5 gap-1 text-center">
+                      {RES_ORDER.map((k) => (
+                        <div key={k}>
+                          <div className="text-[8px] font-bold text-muted-foreground">{t[k]}</div>
+                          <div className="text-[10px] font-extrabold tabular-nums" dir="ltr">
+                            {isConsumptionReady ? formatBigUnit(consTotal[k], lang) : "—"}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* TABLE 5 — Boxes */}
+        {activeTab === 4 &&
+          (() => {
+            const visibleBoxes = BOXES.filter((b) => !b.woodOnly || state.resource === "wood");
+            const totalRes = visibleBoxes.reduce(
+              (acc, b) => acc + parseNum(state.boxes[b.key]) * b.value,
+              0,
+            );
+            const iron = totalRes / 6;
+            const silver = totalRes / 24;
+            const resName = state.resource === "wood" ? t.wood : t.wheat;
+            const fmtUnit = (n: number, divisor: number, unitLabel: string, name: string) => {
+              const v = n / divisor;
+              return `${v.toLocaleString("en-US", { maximumFractionDigits: 2 })} ${unitLabel} ${name}`;
+            };
+            return (
+              <section className="card-grad overflow-hidden">
+                <div className="flex items-center justify-between gap-2 border-b border-border px-3 py-2.5">
+                  <h2 className="text-sm font-extrabold">{t.table5Title}</h2>
+                  <select
+                    className="num-input compact !w-auto"
+                    value={state.resource}
+                    onChange={(e) =>
+                      setState((s) => ({ ...s, resource: e.target.value as "wood" | "wheat" }))
+                    }
+                  >
+                    <option value="wood">{t.wood}</option>
+                    <option value="wheat">{t.wheat}</option>
+                  </select>
+                </div>
+
+                <div className="px-2 py-2">
+                  <div
+                    className="grid items-stretch gap-1.5 text-center text-[11px] font-bold text-muted-foreground"
+                    style={{ gridTemplateColumns: "minmax(0,1.4fr) minmax(0,1fr)" }}
+                  >
+                    <div className="py-1">{t.boxType}</div>
+                    <div className="py-1">{t.boxCount}</div>
+                  </div>
+
+                  <div className="mt-1 space-y-1.5">
+                    {visibleBoxes.map((b) => {
+                      const label = `${t[b.labelKey]} ${resName}`;
+                      return (
+                        <div
+                          key={b.key}
+                          className="grid items-center gap-1.5 rounded-xl bg-[color-mix(in_oklab,var(--surface-2)_70%,transparent)] px-2 py-1.5"
+                          style={{ gridTemplateColumns: "minmax(0,1.4fr) minmax(0,1fr)" }}
+                        >
+                          <div className="min-w-0 truncate text-center text-[12px] font-bold">
+                            {label}
+                          </div>
+                          <input
+                            inputMode="decimal"
+                            className="num-input compact"
+                            value={state.boxes[b.key]}
+                            placeholder="0"
+                            onChange={(e) =>
+                              setState((s) => ({
+                                ...s,
+                                boxes: { ...s.boxes, [b.key]: normalizeDigits(e.target.value) },
+                              }))
+                            }
+                          />
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  <div className="mt-3 space-y-1.5">
+                    <ReadonlyResult
+                      label={`${t.totalResource} ${resName}`}
+                      value={fmtUnit(totalRes, 1e9, t.unitBillion, resName)}
+                      tone="brand"
+                    />
+                    <ReadonlyResult
+                      label={t.iron}
+                      value={fmtUnit(iron, 1e6, t.unitMillion, t.iron)}
+                      tone="success"
+                    />
+                    <ReadonlyResult
+                      label={t.silver}
+                      value={fmtUnit(silver, 1e6, t.unitMillion, t.silver)}
+                    />
+                  </div>
+                </div>
+              </section>
+            );
+          })()}
       </main>
 
       {toast && (
         <div className="pointer-events-none fixed inset-x-0 bottom-6 z-50 flex justify-center">
-          <div className="rounded-full bg-foreground px-4 py-2 text-xs font-bold text-background shadow-lg">{toast}</div>
+          <div className="rounded-full bg-foreground px-4 py-2 text-xs font-bold text-background shadow-lg">
+            {toast}
+          </div>
         </div>
       )}
     </div>
@@ -1089,11 +1351,21 @@ export function Calculator({ lang, setLang }: { lang: Lang; setLang: (l: Lang) =
 }
 
 function ImageUpload({
-  label, busy, busyLabel, onFile,
-}: { label: string; busy: boolean; busyLabel: string; onFile: (f: File) => void }) {
+  label,
+  busy,
+  busyLabel,
+  onFile,
+}: {
+  label: string;
+  busy: boolean;
+  busyLabel: string;
+  onFile: (f: File) => void;
+}) {
   return (
     <div className="border-b border-border bg-[color-mix(in_oklab,var(--surface-2)_50%,transparent)] px-3 py-2 text-center">
-      <label className={`btn ${busy ? "btn-ghost" : "btn-secondary"} inline-flex cursor-pointer items-center gap-2 text-[11px]`}>
+      <label
+        className={`btn ${busy ? "btn-ghost" : "btn-secondary"} inline-flex cursor-pointer items-center gap-2 text-[11px]`}
+      >
         {busy ? busyLabel : `📷 ${label}`}
         <input
           type="file"
@@ -1146,7 +1418,9 @@ function ResourceInput({
         onChange={(e) => onMul(e.target.value)}
       >
         {units.map((u) => (
-          <option key={u.v} value={u.v}>{t[u.k]}</option>
+          <option key={u.v} value={u.v}>
+            {t[u.k]}
+          </option>
         ))}
       </select>
     </div>
@@ -1162,15 +1436,19 @@ function ReadonlyResult({
   value: string;
   tone?: "brand" | "success" | "neutral";
 }) {
-  const bg = tone === "brand"
-    ? "color-mix(in oklab, var(--brand) 18%, transparent)"
-    : tone === "success"
-      ? "color-mix(in oklab, var(--success) 18%, transparent)"
-      : "color-mix(in oklab, var(--surface-2) 90%, transparent)";
-  const color = tone === "brand" ? "var(--brand)" : tone === "success" ? "var(--success)" : undefined;
+  const bg =
+    tone === "brand"
+      ? "color-mix(in oklab, var(--brand) 18%, transparent)"
+      : tone === "success"
+        ? "color-mix(in oklab, var(--success) 18%, transparent)"
+        : "color-mix(in oklab, var(--surface-2) 90%, transparent)";
+  const color =
+    tone === "brand" ? "var(--brand)" : tone === "success" ? "var(--success)" : undefined;
   return (
     <div className="rounded-xl px-3 py-2.5 text-center" style={{ background: bg }}>
-      <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">{label}</div>
+      <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+        {label}
+      </div>
       <input
         readOnly
         className="num-input compact mt-1 cursor-default !text-[14px] font-extrabold"
@@ -1183,7 +1461,14 @@ function ReadonlyResult({
 }
 
 function OcrImageReview({
-  src, show, onToggle, height, onHeightChange, zoom, onZoomChange, labels,
+  src,
+  show,
+  onToggle,
+  height,
+  onHeightChange,
+  zoom,
+  onZoomChange,
+  labels,
 }: {
   src: string | null;
   show: boolean;
@@ -1206,7 +1491,9 @@ function OcrImageReview({
     const next = Math.max(80, Math.min(maxH, dragRef.current.startH + dy));
     onHeightChange(next);
   };
-  const onPointerUp = () => { dragRef.current = null; };
+  const onPointerUp = () => {
+    dragRef.current = null;
+  };
 
   if (!src) return null;
 
@@ -1222,13 +1509,19 @@ function OcrImageReview({
               onClick={() => onZoomChange(Math.max(0.5, +(zoom - 0.25).toFixed(2)))}
               className="btn btn-ghost !px-2 !py-0.5 text-[12px]"
               aria-label="zoom-out"
-            >−</button>
-            <span className="min-w-[34px] text-center text-[10px] tabular-nums">{Math.round(zoom * 100)}%</span>
+            >
+              −
+            </button>
+            <span className="min-w-[34px] text-center text-[10px] tabular-nums">
+              {Math.round(zoom * 100)}%
+            </span>
             <button
               onClick={() => onZoomChange(Math.min(4, +(zoom + 0.25).toFixed(2)))}
               className="btn btn-ghost !px-2 !py-0.5 text-[12px]"
               aria-label="zoom-in"
-            >＋</button>
+            >
+              ＋
+            </button>
           </div>
         )}
       </div>
@@ -1257,8 +1550,18 @@ function OcrImageReview({
 }
 
 function TasarihSplit({
-  src, height, onHeightChange, onClose, removeLabel,
-}: { src: string; height: number; onHeightChange: (h: number) => void; onClose: () => void; removeLabel: string }) {
+  src,
+  height,
+  onHeightChange,
+  onClose,
+  removeLabel,
+}: {
+  src: string;
+  height: number;
+  onHeightChange: (h: number) => void;
+  onClose: () => void;
+  removeLabel: string;
+}) {
   const dragRef = useRef<{ startY: number; startH: number } | null>(null);
   const onPointerDown = (e: React.PointerEvent) => {
     (e.target as HTMLElement).setPointerCapture(e.pointerId);
@@ -1270,12 +1573,17 @@ function TasarihSplit({
     const next = Math.max(80, Math.min(window.innerHeight * 0.7, dragRef.current.startH + dy));
     onHeightChange(next);
   };
-  const onPointerUp = () => { dragRef.current = null; };
+  const onPointerUp = () => {
+    dragRef.current = null;
+  };
   return (
     <div className="sticky top-0 z-40 w-full border-b border-border bg-background shadow-sm">
       <div className="relative w-full overflow-auto" style={{ height }}>
         <img src={src} alt="" className="block w-full" />
-        <button onClick={onClose} className="absolute right-2 top-2 rounded-full bg-foreground/80 px-3 py-1 text-[10px] font-bold text-background">
+        <button
+          onClick={onClose}
+          className="absolute right-2 top-2 rounded-full bg-foreground/80 px-3 py-1 text-[10px] font-bold text-background"
+        >
           ✕ {removeLabel}
         </button>
       </div>
