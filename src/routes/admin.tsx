@@ -19,10 +19,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({
-    meta: [
-      { title: "Admin" },
-      { name: "robots", content: "noindex,nofollow" },
-    ],
+    meta: [{ title: "Admin" }, { name: "robots", content: "noindex,nofollow" }],
   }),
   ssr: false,
   component: AdminPage,
@@ -170,7 +167,13 @@ function AdminPage() {
                     <XAxis dataKey="day" fontSize={11} />
                     <YAxis fontSize={11} />
                     <Tooltip />
-                    <Line type="monotone" dataKey="dau" stroke="hsl(var(--primary))" strokeWidth={2} dot={false} />
+                    <Line
+                      type="monotone"
+                      dataKey="dau"
+                      stroke="hsl(var(--primary))"
+                      strokeWidth={2}
+                      dot={false}
+                    />
                   </LineChart>
                 </ResponsiveContainer>
               </CardContent>

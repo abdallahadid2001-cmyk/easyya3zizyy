@@ -1,9 +1,25 @@
 // Convert Arabic-Indic digits to ASCII, strip non-digits/dots, parse as float.
 const arabicDigits: Record<string, string> = {
-  "٠": "0", "١": "1", "٢": "2", "٣": "3", "٤": "4",
-  "٥": "5", "٦": "6", "٧": "7", "٨": "8", "٩": "9",
-  "۰": "0", "۱": "1", "۲": "2", "۳": "3", "۴": "4",
-  "۵": "5", "۶": "6", "۷": "7", "۸": "8", "۹": "9",
+  "٠": "0",
+  "١": "1",
+  "٢": "2",
+  "٣": "3",
+  "٤": "4",
+  "٥": "5",
+  "٦": "6",
+  "٧": "7",
+  "٨": "8",
+  "٩": "9",
+  "۰": "0",
+  "۱": "1",
+  "۲": "2",
+  "۳": "3",
+  "۴": "4",
+  "۵": "5",
+  "۶": "6",
+  "۷": "7",
+  "۸": "8",
+  "۹": "9",
 };
 
 export function normalizeDigits(input: string): string {
@@ -42,17 +58,18 @@ export function formatHours(n: number): string {
 
 export function formatBigUnit(n: number, lang: "ar" | "en"): string {
   const abs = Math.abs(n);
-  const units = lang === "ar"
-    ? [
-        { v: 1e9, s: " مليار" },
-        { v: 1e6, s: " مليون" },
-        { v: 1e3, s: " ألف" },
-      ]
-    : [
-        { v: 1e9, s: "B" },
-        { v: 1e6, s: "M" },
-        { v: 1e3, s: "K" },
-      ];
+  const units =
+    lang === "ar"
+      ? [
+          { v: 1e9, s: " مليار" },
+          { v: 1e6, s: " مليون" },
+          { v: 1e3, s: " ألف" },
+        ]
+      : [
+          { v: 1e9, s: "B" },
+          { v: 1e6, s: "M" },
+          { v: 1e3, s: "K" },
+        ];
   for (const u of units) {
     if (abs >= u.v) {
       return (n / u.v).toLocaleString("en-US", { maximumFractionDigits: 2 }) + u.s;

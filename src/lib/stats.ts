@@ -37,9 +37,10 @@ export function recordActivity(event: Event, durationMs?: number): void {
     typeof durationMs === "number" && Number.isFinite(durationMs) && durationMs >= 0
       ? Math.round(durationMs)
       : undefined;
-  supabase
-    .rpc("record_activity", { p_client_id: clientId, p_event: event, p_duration_ms })
-    .then(() => {}, () => {});
+  supabase.rpc("record_activity", { p_client_id: clientId, p_event: event, p_duration_ms }).then(
+    () => {},
+    () => {},
+  );
 }
 
 // Call once per browser session.

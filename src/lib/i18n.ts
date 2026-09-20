@@ -60,7 +60,8 @@ export const translations = {
     powerUnit: "قوة قتال الواحد",
     powerValue: "كم زادت قوة القتال",
     powerIncrease: "إجمالي زيادة القوة",
-    powerNote: "أرسل لقطة شاشة لتدريب عدد معين من الجيش بعتاد بخصائص القلعة كاملة وليس عتاد التدريب",
+    powerNote:
+      "أرسل لقطة شاشة لتدريب عدد معين من الجيش بعتاد بخصائص القلعة كاملة وليس عتاد التدريب",
     soldiersNote: "أرسل لقطة شاشة لتدريب دفعة جنود — يتم استخراج العدد وزمن التدريب",
     aiRecognized: "تم التعرف على",
     powerUnitFree: "وحدة حرة",
@@ -91,7 +92,8 @@ export const translations = {
     uploadTasarih: "رفع صورة التساريع",
     removeImage: "إزالة الصورة",
     sendScreenshot: "أرسل لقطة شاشة",
-    consumptionNote: "ارفع صورة دفعة تدريب — يتم استخراج عدد الجنود + الموارد، ونحسب الاستهلاك لكل جندي تلقائياً",
+    consumptionNote:
+      "ارفع صورة دفعة تدريب — يتم استخراج عدد الجنود + الموارد، ونحسب الاستهلاك لكل جندي تلقائياً",
     batchSoldiers: "جنود الدفعة",
     perSoldierCalc: "لكل جندي",
     perSoldiersFor: "لكل",
@@ -184,8 +186,10 @@ export const translations = {
     powerUnit: "Per-unit combat power",
     powerValue: "Power increase",
     powerIncrease: "Total power gain",
-    powerNote: "Send a screenshot of training a specific army count with the castle's FULL gear stats — not training gear only",
-    soldiersNote: "Send a screenshot of a training batch — soldier count and training time are extracted",
+    powerNote:
+      "Send a screenshot of training a specific army count with the castle's FULL gear stats — not training gear only",
+    soldiersNote:
+      "Send a screenshot of a training batch — soldier count and training time are extracted",
     aiRecognized: "Recognized",
     powerUnitFree: "Free unit",
     manualHours: "Or enter known hours",
@@ -215,7 +219,8 @@ export const translations = {
     uploadTasarih: "Upload boost image",
     removeImage: "Remove image",
     sendScreenshot: "Send a screenshot",
-    consumptionNote: "Upload a training-batch image — soldier count + resources are extracted and per-soldier cost is computed",
+    consumptionNote:
+      "Upload a training-batch image — soldier count + resources are extracted and per-soldier cost is computed",
     batchSoldiers: "Batch soldiers",
     perSoldierCalc: "Per soldier",
     perSoldiersFor: "Per",
