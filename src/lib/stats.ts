@@ -9,7 +9,7 @@ function getClientId(): string | null {
   try {
     let id = window.localStorage.getItem(CLIENT_ID_KEY);
     if (!id) {
-      const uuid = (crypto as any)?.randomUUID?.();
+      const uuid = globalThis.crypto?.randomUUID?.();
       id = typeof uuid === "string" ? uuid : fallbackUuid();
       window.localStorage.setItem(CLIENT_ID_KEY, id);
     }
